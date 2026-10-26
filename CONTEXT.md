@@ -41,6 +41,12 @@ A resource whose specific and volume prerequisites are all met. Entry points are
 **Needs prerequisite setup**:
 A planned resource above Tier 1 that does not yet have a suitable named prerequisite. It remains visible for planning without being offered as ready to study.
 
+**Queue**:
+An ordered selection of unfinished resources the learner explicitly chooses to study next. It starts empty; browsing or studying a resource does not add it automatically. A queued resource can still need preparation; removing it from the queue does not remove the resource or its saved work.
+
+**Up next**:
+The first ready resource in the queue.
+
 **Completion**:
 A record that external study, a saved practice response, and a self-assessment were finished. Completion does not certify mastery.
 

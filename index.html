@@ -16,50 +16,39 @@
     </script>
     <script src="js/curriculum.js" defer></script>
     <script src="js/resource-map.js" defer></script>
+    <script src="js/page-utilities.js" defer></script>
     <script src="js/app.js" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#page">Skip to content</a>
     <header class="site-header">
       <div class="header-inner">
+        <a class="brand" href="#home" aria-label="Kian Academy home">
+          <svg class="brand-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="7" fill="var(--action-primary)"/><path d="M16 11c-4-3-7-2-8-1v12c3-1 5-1 8 1m0-12c4-3 7-2 8-1v12c-3-1-5-1-8 1Zm0 0v12" stroke="var(--ink-strong)" stroke-width="1.7" stroke-linejoin="round"/></svg>
+          <span>Kian Academy</span>
+        </a>
         <nav class="primary-nav" aria-label="Primary navigation">
           <a href="#home">Home</a>
           <a href="#curriculum">Resources</a>
           <a href="#map">Map</a>
-          <a class="mobile-progress-link" href="#progress">My progress</a>
+          <a href="#progress">My progress</a>
         </nav>
-        <a class="brand" href="#home" aria-label="Kian Academy home">
-          <svg class="brand-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="7" fill="#14bf96"/><path d="M16 11c-4-3-7-2-8-1v12c3-1 5-1 8 1m0-12c4-3 7-2 8-1v12c-3-1-5-1-8 1Zm0 0v12" stroke="white" stroke-width="1.7" stroke-linejoin="round"/></svg>
-          <span>Kian Academy</span>
-        </a>
-        <div class="header-tools">
-          <a class="header-progress" href="#progress">My progress</a>
-          <details class="settings-menu">
-            <summary aria-label="Learning settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="m10 3-.7 2.5L7 6.8l-2.5-.6-2 3.5L4.4 12l-1.9 2.3 2 3.5 2.5-.6 2.3 1.3L10 21h4l.7-2.5 2.3-1.3 2.5.6 2-3.5-1.9-2.3 1.9-2.3-2-3.5-2.5.6-2.3-1.3L14 3Z"/></svg></summary>
-            <div class="menu-items">
-              <button type="button" data-action="plan">Add a resource</button>
-              <button type="button" data-action="export">Download progress</button>
-              <button type="button" data-action="import">Restore progress…</button>
-              <button id="theme-toggle" type="button">Switch to dark appearance</button>
-            </div>
-          </details>
+        <div class="page-utilities">
+          <button class="search-launcher" id="search-launcher" type="button" aria-label="Open search and commands" aria-haspopup="dialog" aria-keyshortcuts="Control+k Meta+k Control+Space" data-tooltip="Open search and commands"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button>
+          <button class="icon-button theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark theme" data-tooltip="Switch to dark theme"></button>
         </div>
       </div>
     </header>
-    <button class="mobile-contents" id="contents-toggle" type="button" aria-expanded="false" aria-controls="course-nav">Curriculum <span>Resource activities ⌄</span></button>
     <div class="course-layout">
-      <aside class="course-sidebar" id="course-nav" aria-label="Learning navigation">
-        <div id="course-navigation"></div>
-        <div class="sidebar-footer"><button type="button" class="text-button" data-action="plan">+ Add a resource</button><p id="save-status" role="status">Progress saved in this browser.</p></div>
-      </aside>
       <main id="page" class="course-main" tabindex="-1"></main>
     </div>
     <p id="app-message" class="app-message" role="status" hidden></p>
+    <p id="queue-status" class="sr-only" role="status"></p>
     <noscript><p><a href="https://www.youtube.com/playlist?list=PLzxlKUNNLxmEvjCSUAurMReJBZxaLdD1_" target="_blank" rel="noopener noreferrer">Open Robert Sapolsky’s Human Behavioral Biology lectures</a>. Enable JavaScript to use your curriculum.</p></noscript>
 
     <dialog id="resource-editor" aria-labelledby="editor-title">
       <form id="resource-form">
-        <div class="dialog-heading"><h2 id="editor-title">Add a resource</h2><button class="icon-button" type="button" data-action="close-editor" aria-label="Close">×</button></div>
+        <div class="dialog-heading"><h2 id="editor-title">Add a resource</h2><button class="icon-button" type="button" data-action="close-editor" aria-label="Close" data-tooltip="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m18 6-12 12M6 6l12 12"/></svg></button></div>
         <label class="field">Resource title<input name="title" required maxlength="160" autocomplete="off" autofocus></label>
         <label class="field">External link<input name="url" type="url" required placeholder="https://…" autocomplete="url"></label>
         <label class="field">Creator <span class="optional">optional</span><input name="author" maxlength="160"></label>
@@ -85,6 +74,27 @@
         <div class="dialog-actions"><button class="button" type="button" data-action="close-editor">Cancel</button><button class="button button-primary" type="submit" id="save-resource">Add resource</button></div>
       </form>
     </dialog>
+    <dialog id="queue-picker" aria-labelledby="queue-picker-title">
+      <form id="queue-picker-form">
+        <div class="dialog-heading"><h2 id="queue-picker-title">Add to queue</h2><button class="icon-button" type="button" data-action="close-queue-picker" aria-label="Close" data-tooltip="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m18 6-12 12M6 6l12 12"/></svg></button></div>
+        <label class="field queue-search-field"><span class="sr-only">Search resources</span><span class="search-field"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input id="queue-search" type="search" placeholder="Search resources…" autocomplete="off"></span></label>
+        <div id="queue-picker-results" class="queue-picker-results"></div>
+        <p id="queue-picker-count" class="sr-only" role="status"></p>
+        <div class="dialog-actions"><button class="button" type="button" data-action="close-queue-picker">Cancel</button><button class="button button-primary" id="queue-picker-submit" type="submit" disabled>Add to queue</button></div>
+      </form>
+    </dialog>
+    <dialog class="command-dialog" id="command-palette" aria-labelledby="command-title">
+      <div class="command-content">
+        <h2 id="command-title" class="sr-only">Search and commands</h2>
+        <div class="command-search"><label class="sr-only" for="command-query">Search commands</label><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input id="command-query" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="command-options" placeholder="Search commands…" autocomplete="off" spellcheck="false"></div>
+        <div class="command-options" id="command-options" role="listbox" aria-label="Commands"></div>
+        <p class="sr-only" id="command-status" role="status"></p>
+      </div>
+    </dialog>
+    <dialog id="keyboard-shortcuts" aria-labelledby="shortcuts-title">
+      <div class="dialog-content"><div class="dialog-heading"><h2 id="shortcuts-title">Keyboard shortcuts</h2><button class="icon-button" type="button" data-close-shortcuts aria-label="Close" data-tooltip="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m18 6-12 12M6 6l12 12"/></svg></button></div><dl class="shortcut-list" id="shortcut-list"></dl></div>
+    </dialog>
+    <div id="utility-tooltip" class="utility-tooltip" role="tooltip" hidden></div>
     <datalist id="tag-options"></datalist>
     <input id="import-file" type="file" accept="application/json,.json" hidden>
   </body>

@@ -83,6 +83,13 @@
       focus: "Choose one criticism in Guzey's article. Trace the cited evidence, explain the claim and counterclaim in your own words, and note what remains uncertain."
     },
     {
+      id: "alexey-guzey-on-sleep", title: "Alexey Guzey on sleep: Put this guy on Rogan and give him a Ted talk.", author: "Andrew Gelman", tier: 1,
+      url: "https://statmodeling.stat.columbia.edu/2022/02/12/alexey-guzey-on-sleep-put-this-guy-on-rogan-and-give-him-a-ted-talk/",
+      tags: ["sleep", "psychology", "research literacy"],
+      tierReason: "A short discussion for general readers that introduces the arguments it examines without requiring prior study.",
+      focus: "Explain Guzey's analogy between sleep and hunger, then compare it with Gelman's objections and his opportunity-cost argument. Separate analogy and personal experience from empirical evidence, and describe what evidence would help assess one disputed claim."
+    },
+    {
       id: "great-psychotherapy-debate", title: "The Great Psychotherapy Debate", author: "Bruce E. Wampold and Zac E. Imel", tier: 3,
       url: "https://www.routledge.com/The-Great-Psychotherapy-Debate-The-Evidence-for-What-Makes-Psychotherapy/Wampold-Imel/p/book/9780805857092",
       tags: ["psychology", "psychotherapy", "treatment efficacy", "research methods"],
@@ -105,7 +112,7 @@
     }
   ];
   function initialState() {
-    return { version: 2, resources: CATALOG.map(createResource), selectedId: "feeling-good" };
+    return { version: 2, resources: CATALOG.map(createResource), selectedId: "feeling-good", queueIds: [] };
   }
   function addCatalogResources(state) {
     const next = copy(state);
@@ -150,6 +157,34 @@
     return { ready, configured, specific, volume, kind: !configured ? "setup" : ready ? "ready" : "waiting" };
   }
   const blocked = (state, resource) => !availability(state, resource).ready;
+  function queuedResources(state) {
+    const byId = new Map(state.resources.map((resource) => [resource.id, resource]));
+    return [...new Set(state.queueIds || [])].map((id) => byId.get(id)).filter((resource) => resource && !resource.completedAt);
+  }
+  function upNext(state) { return queuedResources(state).find((resource) => !blocked(state, resource)) || null; }
+  function enqueue(state, id) {
+    const resource = state.resources.find((item) => item.id === id);
+    if (!resource) throw new Error("This resource could not be found.");
+    if (resource.completedAt) throw new Error("Reopen this resource before adding it to your queue.");
+    const next = copy(state);
+    next.queueIds = [...new Set([...queuedResources(state).map((item) => item.id), id])];
+    return next;
+  }
+  function dequeue(state, id) {
+    const next = copy(state);
+    next.queueIds = queuedResources(state).filter((resource) => resource.id !== id).map((resource) => resource.id);
+    return next;
+  }
+  function restoreQueue(state, ids) {
+    if (ids === undefined) {
+      state.queueIds = [];
+    } else {
+      if (!Array.isArray(ids) || ids.some((id) => typeof id !== "string")) throw new Error("The backup contains an invalid learning queue.");
+      state.queueIds = ids;
+      state.queueIds = queuedResources(state).map((resource) => resource.id);
+    }
+    return state;
+  }
   function validateGraph(state) {
     const byId = new Map(state.resources.map((resource) => [resource.id, resource]));
     for (const resource of state.resources) {
@@ -175,6 +210,7 @@
       if (resource.completedAt && !requirements(resource).length && (current.ready || resource.legacyCredit && !lostPreparation)) continue;
       if (resource.completedAt) { resource.completedAt = null; resource.legacyCredit = false; }
     }
+    state.queueIds = queuedResources(state).map((resource) => resource.id);
     return state;
   }
   function update(state, id, action, value) {
@@ -286,7 +322,7 @@
       }
     }
     validateGraph(migrated);
-    return migrated;
+    return restoreQueue(migrated);
   }
   function readState(raw) {
     if (!raw || ![1, 2].includes(raw.version)) throw new Error("This is not a supported learning backup.");
@@ -299,9 +335,9 @@
     const resources = raw.resources.map((item) => restoreWork(createResource(item), item));
     const state = { version: 2, resources, selectedId: ids.has(raw.selectedId) ? raw.selectedId : resources[0].id };
     validateGraph(state);
-    return reconcile(state);
+    return restoreQueue(reconcile(state), raw.queueIds);
   }
-  const api = { TIERS, initialState, addCatalogResources, tags, status, requirements, needsReview, matchesTags, volumeMatches, availability, blocked, update, saveResource, readState };
+  const api = { TIERS, initialState, addCatalogResources, tags, status, requirements, needsReview, matchesTags, volumeMatches, availability, blocked, queuedResources, upNext, enqueue, dequeue, update, saveResource, readState };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.Curriculum = api;
 })(globalThis);

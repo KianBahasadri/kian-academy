@@ -28,7 +28,7 @@ function legacy(state) {
 test("the requested catalog has five tiers and one unit per resource, with no universal volume quota", () => {
   const state = C.initialState();
   assert.equal(state.version, 2);
-  assert.equal(state.resources.length, 6);
+  assert.equal(state.resources.length, 7);
   assert.equal(C.TIERS.length, 5);
   assert.equal(C.TIERS[0].name, "Entry point");
   assert.equal(get(state, ROOT).tier, 1);
@@ -276,7 +276,7 @@ test("historical completion of a university resource survives migration and is r
 test("catalog additions are idempotent and keep customized resources and their progress", () => {
   let state = finish(base()); const snapshot = structuredClone(state);
   state = C.addCatalogResources(state);
-  assert.equal(state.resources.length, 6);
+  assert.equal(state.resources.length, 7);
   assert.deepEqual(get(state, ROOT), get(snapshot, ROOT));
   assert.deepEqual(C.addCatalogResources(state), state);
   state = C.saveResource(state, { ...get(state, ROOT), title: "My own title", url: "https://example.com/my-edition" }, ROOT);
