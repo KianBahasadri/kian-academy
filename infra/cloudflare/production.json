@@ -1,0 +1,11 @@
+{
+  "hostname": "bahasadri.com",
+  "account_id": "3d463c39c94a3084cea36fc6ffde8931",
+  "lineage": "3eb40c71-2918-be02-c00f-614b884fdab5",
+  "resources": {
+    "cloudflare_d1_database.accounts": "49aa8ec4-8a01-4a79-818e-24a091848419",
+    "cloudflare_workers_script.app": "kian-academy",
+    "cloudflare_workers_route.primary": "3fb51adb7f8947d8b18c293ad576baaf",
+    "cloudflare_r2_bucket.terraform": "kian-academy-terraform"
+  }
+}

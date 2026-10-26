@@ -1,0 +1,75 @@
+name: Deploy production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CI: 'true'
+  WRANGLER_SEND_METRICS: 'false'
+
+jobs:
+  checks:
+    if: github.ref == 'refs/heads/main' && github.event.repository.private == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    concurrency:
+      group: checks-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '26.11.1'
+          package-manager-cache: false
+      - run: npm ci
+      - run: npm run test:accounts
+      - run: npm run test:cloudflare
+      - run: npx --no-install playwright install chromium
+      - name: Test the interface and account saving
+        run: |
+          export CHROMIUM_PATH="$(node --input-type=module -e 'import { chromium } from "@playwright/test"; process.stdout.write(chromium.executablePath())')"
+          npm test
+      - run: npm run build
+
+  deploy:
+    needs: checks
+    if: github.ref == 'refs/heads/main' && github.event.repository.private == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: https://bahasadri.com
+    concurrency:
+      group: production
+      cancel-in-progress: false
+    env:
+      VITE_CLERK_PUBLISHABLE_KEY: ${{ vars.VITE_CLERK_PUBLISHABLE_KEY }}
+      CLERK_JWT_KEY: ${{ vars.CLERK_JWT_KEY }}
+      CLERK_ISSUER: https://clerk.bahasadri.com
+      ACADEMY_HOSTNAME: bahasadri.com
+      CLOUDFLARE_ACCOUNT_ID: 3d463c39c94a3084cea36fc6ffde8931
+      CLOUDFLARE_ZONE_ID: be69bba16896a53bf407f8745b9b179d
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '26.11.1'
+          package-manager-cache: false
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with:
+          terraform_version: 1.15.9
+          terraform_wrapper: false
+      - run: npm ci
+      - run: node scripts/check-clerk.mjs
+      - run: npm run build:cloudflare
+      - run: npm run deploy
