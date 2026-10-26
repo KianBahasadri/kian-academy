@@ -63,6 +63,82 @@ test('search, combined filters, sorting and status tabs find published resources
   await expect(page.locator('tbody')).toContainText('Vectors and transformations');
 });
 
+test('header search filters commands and returns focus after actions and dismissal', async ({ page }) => {
+  await useFixture(page);
+  const launcher = page.getByRole('button', { name: 'Open search and commands', exact: true });
+  await launcher.click();
+  const dialog = page.getByRole('dialog', { name: 'Search and commands', exact: true });
+  const input = dialog.getByRole('combobox', { name: 'Search commands', exact: true });
+  await expect(input).toBeFocused();
+  await expect(launcher).toHaveAttribute('aria-expanded', 'true');
+  await expect(dialog.getByRole('option')).toHaveCount(4);
+  await expect(dialog.getByRole('option', { name: 'Jump to…', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await input.fill('tHeMe');
+  await expect(dialog.getByRole('option', { name: 'Toggle theme', exact: true })).toBeVisible();
+  await expect(dialog.getByRole('option')).toHaveCount(1);
+  await page.keyboard.press('Enter');
+  await expect(dialog).toHaveCount(0);
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect(launcher).toBeFocused();
+
+  await launcher.click();
+  await input.fill('no matching command');
+  await expect(dialog.getByText('No matching commands', { exact: true })).toBeVisible();
+  expect(await input.getAttribute('aria-activedescendant')).toBeNull();
+  await page.keyboard.press('ArrowDown'); await page.keyboard.press('Enter');
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(launcher).toBeFocused();
+
+  await launcher.click();
+  await input.fill('collection');
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('searchbox')).toBeFocused();
+  await page.getByRole('searchbox').fill('Python');
+  await expect(page.locator('tbody tr')).toHaveCount(1);
+  await expect(page.locator('tbody')).toContainText('Python basics');
+});
+
+test('command navigation and shortcuts work on phones without page overflow', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 844 });
+  await useFixture(page);
+  const launcher = page.getByRole('button', { name: 'Open search and commands', exact: true });
+  await expect(launcher).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  await launcher.click();
+  await page.keyboard.press('Enter');
+  const pages = page.getByRole('dialog', { name: 'Jump to a page', exact: true });
+  const input = pages.getByRole('combobox', { name: 'Jump to a page', exact: true });
+  await expect(input).toBeFocused();
+  await expect(pages.getByRole('option')).toHaveCount(2);
+  await input.fill('practice');
+  await expect(pages.getByRole('option', { name: 'Practice', exact: true })).toBeVisible();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: 'Practice', exact: true })).toBeVisible();
+  await page.keyboard.press('Alt+1');
+  await expect(page.getByRole('heading', { name: 'Learning resources', exact: true })).toBeVisible();
+  await page.keyboard.press('Alt+j');
+  await expect(pages).toBeVisible();
+  await expect(input).toHaveValue('');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  await page.mouse.click(1, 1);
+  await expect(pages).toHaveCount(0);
+  await expect(launcher).toBeFocused();
+
+  await page.keyboard.press('Control+Space');
+  const commands = page.getByRole('dialog', { name: 'Search and commands', exact: true });
+  await commands.getByRole('combobox').fill('shortcuts');
+  await page.keyboard.press('Enter');
+  const shortcuts = page.getByRole('dialog', { name: 'Keyboard shortcuts', exact: true });
+  await expect(shortcuts).toBeVisible();
+  await expect(shortcuts).toContainText('Space');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  await page.keyboard.press('Escape');
+  await expect(launcher).toBeFocused();
+  await page.keyboard.press('Alt+Shift+t');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+});
+
 test('details show read-only progress, notes, and related writing', async ({ page }) => {
   await useFixture(page);
   await page.getByRole('button', { name: 'Details for Vectors and transformations' }).click();
@@ -104,7 +180,10 @@ test('phone layout, keyboard focus and transient theme work without persistence'
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Details for Vectors and transformations' })).toBeFocused();
   await page.keyboard.press('/'); await expect(page.getByRole('searchbox')).toBeFocused();
-  await page.keyboard.press('Control+k'); await expect(page.getByRole('searchbox')).toBeFocused();
+  await page.keyboard.press('Control+k');
+  await expect(page.getByRole('combobox', { name: 'Search commands', exact: true })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', { name: 'Open search and commands', exact: true })).toBeFocused();
 });
 
 test('a new published data version is reflected on reload', async ({ page }) => {

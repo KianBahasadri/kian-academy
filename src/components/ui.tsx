@@ -27,12 +27,12 @@ export function Select({ label, value, onChange, children, className = '' }: { l
   return <span className={`select-wrap ${className}`}><select aria-label={label} value={value} onChange={event => onChange(event.target.value)}>{children}</select><ChevronDown size={14} aria-hidden="true" /></span>;
 }
 
-export function Dialog({ title, onClose, children, wide = false, drawer = false }: { title: string; onClose: () => void; children: ReactNode; wide?: boolean; drawer?: boolean }) {
+export function Dialog({ title, onClose, children, wide = false, drawer = false, className = '', returnFocus }: { title: string; onClose: () => void; children: ReactNode; wide?: boolean; drawer?: boolean; className?: string; returnFocus?: HTMLElement | null }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   useEffect(() => {
     const dialog = ref.current!;
-    const previous = document.activeElement;
+    const previous = returnFocus ?? document.activeElement;
     dialog.showModal();
     dialog.querySelector<HTMLElement>('[data-autofocus]')?.focus();
     const overflow = document.body.style.overflow;
@@ -40,11 +40,11 @@ export function Dialog({ title, onClose, children, wide = false, drawer = false 
     return () => {
       dialog.close();
       document.body.style.overflow = overflow;
-      if (previous instanceof HTMLElement && previous.isConnected) previous.focus();
+      if (previous instanceof HTMLElement && previous.isConnected) previous.focus({ preventScroll: true });
     };
   }, []);
-  return <dialog ref={ref} className={`dialog${wide ? ' wide' : ''}${drawer ? ' drawer' : ''}`} aria-labelledby={titleId} onCancel={event => { event.preventDefault(); onClose(); }} onClick={event => { if (event.target === event.currentTarget) { const rect = event.currentTarget.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) onClose(); } }}>
-    <div className="dialog-header"><h2 id={titleId}>{title}</h2><button type="button" className="icon-button" aria-label="Close dialog" onClick={onClose}><X size={19} /></button></div>
+  return <dialog ref={ref} className={`dialog${wide ? ' wide' : ''}${drawer ? ' drawer' : ''} ${className}`} aria-labelledby={titleId} onCancel={event => { event.preventDefault(); onClose(); }} onClick={event => { if (event.target === event.currentTarget) { const rect = event.currentTarget.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) onClose(); } }}>
+    <div className="dialog-header"><h2 id={titleId}>{title}</h2><button type="button" className="icon-button" aria-label="Close dialog" title="Close dialog" onClick={onClose}><X size={19} aria-hidden="true" focusable="false" /></button></div>
     {children}
   </dialog>;
 }
