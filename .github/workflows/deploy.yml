@@ -1,4 +1,4 @@
-name: Deploy production
+name: Deploy GitHub Pages
 
 on:
   push:
@@ -8,18 +8,14 @@ on:
 permissions:
   contents: read
 
-env:
-  CI: 'true'
-  WRANGLER_SEND_METRICS: 'false'
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
 
 jobs:
-  checks:
-    if: github.ref == 'refs/heads/main' && github.event.repository.private == false
+  build:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    concurrency:
-      group: checks-${{ github.ref }}
-      cancel-in-progress: true
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -27,49 +23,30 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '26.11.1'
-          package-manager-cache: false
+          cache: npm
       - run: npm ci
-      - run: npm run test:accounts
-      - run: npm run test:cloudflare
+      - run: npm run build
       - run: npx --no-install playwright install chromium
-      - name: Test the interface and account saving
+      - name: Test the published portfolio
         run: |
           export CHROMIUM_PATH="$(node --input-type=module -e 'import { chromium } from "@playwright/test"; process.stdout.write(chromium.executablePath())')"
           npm test
-      - run: npm run build
+      - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
+        with:
+          path: dist
 
   deploy:
-    needs: checks
-    if: github.ref == 'refs/heads/main' && github.event.repository.private == false
+    needs: build
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
     environment:
-      name: production
-      url: https://bahasadri.com
-    concurrency:
-      group: production
-      cancel-in-progress: false
-    env:
-      VITE_CLERK_PUBLISHABLE_KEY: ${{ vars.VITE_CLERK_PUBLISHABLE_KEY }}
-      CLERK_JWT_KEY: ${{ vars.CLERK_JWT_KEY }}
-      CLERK_ISSUER: https://clerk.bahasadri.com
-      ACADEMY_HOSTNAME: bahasadri.com
-      CLOUDFLARE_ACCOUNT_ID: 3d463c39c94a3084cea36fc6ffde8931
-      CLOUDFLARE_ZONE_ID: be69bba16896a53bf407f8745b9b179d
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version: '26.11.1'
-          package-manager-cache: false
-      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
-        with:
-          terraform_version: 1.15.9
-          terraform_wrapper: false
-      - run: npm ci
-      - run: node scripts/check-clerk.mjs
-      - run: npm run build:cloudflare
-      - run: npm run deploy
+      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+      - name: Deploy site
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

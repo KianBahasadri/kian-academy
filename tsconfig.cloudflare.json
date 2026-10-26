@@ -1,5 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": { "types": ["@cloudflare/workers-types", "node"] },
-  "include": ["cloudflare/**/*.ts", "server/accountApi.ts", "server/accountStore.ts", "src/model.ts", "src/seed.ts"]
-}

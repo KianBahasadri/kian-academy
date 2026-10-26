@@ -1,6 +1,5 @@
 export const resourceFormats = ['Playlist', 'Course', 'Book', 'Textbook', 'Article', 'Other'] as const;
 export const practiceFormats = ['Essay', 'Video', 'Project', 'Notes', 'Other'] as const;
-export const subjects = ['Mathematics', 'Computer science', 'Writing', 'Biology', 'Learning', 'Physics', 'History', 'Art'] as const;
 
 export type ResourceFormat = typeof resourceFormats[number];
 export type PracticeFormat = typeof practiceFormats[number];
@@ -41,8 +40,6 @@ export interface Library {
   practice: Practice[];
 }
 
-export const STORAGE_KEY = 'kian-academy:library:v1';
-
 export function safeUrl(value: string): string {
   if (!value.trim()) return '';
   try {
@@ -56,20 +53,11 @@ export function sourceHost(url: string): string {
   catch { return ''; }
 }
 
-export function resourceProgress(resource: Resource, progress: number): Resource {
-  const value = Math.max(0, Math.min(100, Math.round(progress)));
-  return { ...resource, progress: value, status: value === 100 ? 'completed' : value > 0 || resource.status !== 'planned' ? 'learning' : 'planned' };
-}
-
-export function resourceStatus(resource: Resource, status: ResourceStatus): Resource {
-  return { ...resource, status, progress: status === 'completed' ? 100 : status === 'planned' ? 0 : resource.progress === 100 ? 0 : resource.progress };
-}
-
 export function wordCount(text: string): number {
   return text.trim() ? text.trim().split(/\s+/).length : 0;
 }
 
-// Validate saved data before using it. A damaged or newer save is never replaced by examples.
+// Invalid published data must fail the build instead of being silently replaced.
 export function parseLibrary(raw: string): Library {
   const data: unknown = JSON.parse(raw);
   const object = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;

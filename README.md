@@ -1,62 +1,49 @@
 # Kian Academy
 
-A small learning library and practice workspace, built with React, TypeScript, and Vite. The interface follows the local Grakata project: IBM Plex typography, quiet dark and light palettes, compact tables, and details on demand.
+My learning resources and the work I create from them, published as a static portfolio. The interface follows Grakata's compact tables, IBM Plex typography, and muted dark and light palettes.
 
-## Run
+**Site:** https://bahasadri.com · **Repository:** https://github.com/KianBahasadri/kian-academy
+
+## Publish learning updates
+
+Edit [data/library.json](data/library.json), commit the change, and push to `main`:
+
+```sh
+git add data/library.json
+git commit -m "Update my learning progress"
+git push
+```
+
+GitHub Actions validates the data, builds and tests the site, and deploys `dist/` to GitHub Pages. Refresh the live page after the deployment completes to see the update. No deployment secrets are required.
+
+- **Resources** are books, textbooks, courses, playlists, articles, and other material. Update `status`, `progress`, and `notes` as you learn.
+- **Practice** is your own work: essays, videos, projects, and notes. Put writing in `content` or link published work in `url`. Set `resourceId` to a resource's `id`, or `null` for independent work.
+
+See [the data guide](data/README.md) for complete examples. The initial eight resource links are marked **To learn**, with no claimed progress; replace them with your own learning history. Practice starts empty.
+
+Visitors browse published content. Learning data comes exclusively from the committed JSON file. The site has no accounts, backend, browser storage, cookies, or editing controls. Every entry in that file is public. Searches, filters, and theme changes last only for the current page session.
+
+## Develop
 
 Requires Node.js 22.18+ and npm.
 
 ```sh
 npm ci
-npm run dev
+npm run dev           # http://127.0.0.1:5174
+npm run validate:data # Check published content before committing
+npm run build         # Validate, type-check, and build dist/
+npm run preview       # Preview the static build
+npm test              # Read-only portfolio and publication tests
 ```
 
-Open http://127.0.0.1:5174. The port is separate from Grakata's development server.
-
-```sh
-npm run build   # Type-check and build dist/
-npm run preview
-npm test        # Browser and account-saving interactions
-npm run test:accounts    # Local SQLite account API
-npm run test:cloudflare  # Worker / D1 account API
-```
-
-Tests use system Chromium at `/usr/bin/chromium`. Set `CHROMIUM_PATH` to use another Chromium executable. All fonts and icons are bundled locally. A built `dist/` can be served by a static host; navigation uses hash routes.
-
-## Two entities
-
-- **Resources:** playlists, courses, books, textbooks, articles, and other learning materials. Each has a subject, optional creator and URL, notes, status, and progress. Eight editable starter links are included with no claimed progress.
-- **Practice:** work the user creates, including essays, videos, projects, and notes. Write in the editor or link to an existing artifact. Practice can be a draft or finished, and can optionally reference one resource. It starts empty. Removing a resource preserves its practice as independent work; removal can be undone.
-
-Clerk manages sign-in. Signed-in libraries save to your account and work across devices; guests keep a separate library in the current browser. Account data uses SQLite locally and Cloudflare D1 in production, with a Worker and a Durable Object handling authenticated requests. Video and other externally hosted artifacts use links.
-
-Use **This device** or your account name to download a JSON backup or review and restore one. The device library is preserved when you sign in; **Use device library** explicitly copies it into your account after review. Storage failures stay visible, damaged saves are not silently reset, and imports are validated before replacement. Concurrent edits are rejected rather than overwriting work saved on another device. Search works with `/` or `Ctrl/⌘ K`; `N` opens the add form and `Esc` closes a dialog.
-
-## Clerk setup
-
-The Academy has its own Clerk application, separate from Grakata. Development and production accounts and libraries are separate too. Copy `.env.example` for manual setup, or pull the linked development keys:
-
-```sh
-npx clerk link --app app_3LFHCMqMVC7JyhfQ6licFp81xxp
-npx clerk env pull --instance dev --file .env.local
-chmod 600 .env.local
-```
-
-The browser uses only `VITE_CLERK_PUBLISHABLE_KEY`. Local API verification uses `CLERK_JWT_KEY` or `CLERK_SECRET_KEY`; production uses the public JWT key and checks both issuer and authorized origin. Secrets and databases are ignored by Git. Without Clerk keys, local device libraries still work.
-
-Production hosting at **https://bahasadri.com** uses Cloudflare Workers, D1, a private R2 Terraform state bucket, and Terraform-managed Clerk DNS. See [deployment and recovery](infra/cloudflare/README.md).
+Tests use system Chromium at `/usr/bin/chromium`, or `CHROMIUM_PATH`. They run on port 5175, separately from the app. Fonts and icons are bundled locally. Relative asset paths and hash navigation support both GitHub project URLs and the custom domain.
 
 ## Source
 
-- `src/model.ts`: the two entities, progress rules, safe links, and backup validation.
-- `src/seed.ts`: editable starter resource links.
-- `src/useLibrary.ts`: browser storage, backup download, and cross-tab updates.
-- `src/useAccountLibrary.ts`: account loading, queued saves, revision conflicts, and session isolation.
-- `src/auth.tsx`: Clerk provider, sign-in, sign-up, account management, and sign-out.
-- `src/App.tsx`: navigation, collections, filtering, and editing actions.
-- `src/components/`: forms, details, dialogs, and library settings.
-- `src/styles.css`: shared tokens, both themes, and responsive layouts.
-- `tests/library.spec.ts`: resource and practice editing, persistence, relationships, backup restore, filtering, keyboard focus, and phone layout.
-- `server/`: shared verified account API and local SQLite adapter.
-- `cloudflare/`: Worker, account coordinator, and numbered SQL migrations.
-- `infra/cloudflare/`: production Terraform configuration and public deployment identities.
+- `data/library.json`: published resources, progress, notes, and practice.
+- `src/model.ts`: the data contract and validation.
+- `src/library.ts`: reads the committed data for the build.
+- `src/App.tsx`, `src/components/`: read-only collections and detail panels.
+- `src/styles.css`: design tokens, both themes, and phone layouts.
+- `scripts/validate-data.mjs`: rejects invalid content before publication.
+- `.github/workflows/deploy.yml`: deployment on pushes to `main`.
