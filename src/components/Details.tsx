@@ -1,7 +1,7 @@
 import { ArrowUpRight, ChevronRight, ExternalLink, NotebookPen } from 'lucide-react';
-import { safeUrl, sourceHost, wordCount } from '../model';
+import { resourceTiers, safeUrl, sourceHost, wordCount } from '../model';
 import type { Practice, Resource } from '../model';
-import { Dialog, FormatIcon, ResourceMark, Status } from './ui';
+import { Dialog, FormatIcon, ResourceMark, Status, Tier } from './ui';
 
 const fullDate = (value: string) => new Date(value).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
 
@@ -10,6 +10,7 @@ export function ResourceDetails({ resource, practice, onPractice, onClose }: { r
     <div className="detail-identity"><ResourceMark format={resource.format} subject={resource.subject} large /><span className="eyebrow">{resource.format}<span>·</span>{resource.subject}</span></div>
     <h3 className="detail-title">{resource.title}</h3>{resource.creator && <p className="detail-creator">{resource.creator}</p>}{resource.description && <p className="detail-description">{resource.description}</p>}
     {safeUrl(resource.url) && <><div className="detail-actions"><a className="button primary" href={safeUrl(resource.url)} target="_blank" rel="noopener noreferrer">Open resource<ArrowUpRight size={16} /></a></div><span className="source-host"><ExternalLink size={12} />{sourceHost(resource.url)}</span></>}
+    <section className="detail-section"><div className="detail-section-heading"><h3>Resource tier</h3><Tier value={resource.tier} /></div><p className="tier-description">{resourceTiers[resource.tier - 1].description}</p></section>
     <section className="detail-section"><div className="detail-section-heading"><h3>Learning progress</h3><Status value={resource.status} /></div><div className="published-progress"><progress aria-label={`${resource.title} progress`} value={resource.progress} max={100} /><span className="mono">{resource.progress}%</span></div></section>
     {resource.notes.trim() && <section className="detail-section"><div className="detail-section-heading"><h3>Notes</h3></div><div className="practice-content">{resource.notes}</div></section>}
     <section className="detail-section"><div className="detail-section-heading"><h3>Related practice <span className="count">{practice.length}</span></h3></div>{practice.length ? <div className="related-list">{practice.map(item => <button key={item.id} type="button" onClick={() => onPractice(item.id)}><FormatIcon format={item.format} /><span>{item.title}<small>{item.format} · {item.status === 'draft' ? 'Draft' : 'Finished'}</small></span><ChevronRight size={15} /></button>)}</div> : <div className="related-empty"><NotebookPen size={23} strokeWidth={1.4} /><p>No related work published yet.</p></div>}</section>

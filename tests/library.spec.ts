@@ -13,9 +13,9 @@ const date = '2026-10-26T12:00:00Z';
 const fixture: Library = {
   version: 1,
   resources: [
-    { id: 'vectors', title: 'Vectors and transformations', creator: 'Test author', format: 'Playlist', subject: 'Mathematics', url: 'https://example.com/vectors', description: 'A visual introduction.', notes: 'Linear transformations preserve addition and scaling.', status: 'completed', progress: 100, createdAt: date, updatedAt: date },
-    { id: 'python', title: 'Python basics', creator: 'Test teacher', format: 'Course', subject: 'Computer science', url: 'https://example.com/python', description: '', notes: 'Functions and small programs.', status: 'learning', progress: 40, createdAt: date, updatedAt: date },
-    { id: 'writing', title: 'Clear prose', creator: 'Test writer', format: 'Book', subject: 'Writing', url: '', description: '', notes: '', status: 'planned', progress: 0, createdAt: date, updatedAt: date },
+    { id: 'vectors', title: 'Vectors and transformations', creator: 'Test author', format: 'Playlist', tier: 3, subject: 'Mathematics', url: 'https://example.com/vectors', description: 'A visual introduction.', notes: 'Linear transformations preserve addition and scaling.', status: 'completed', progress: 100, createdAt: date, updatedAt: date },
+    { id: 'python', title: 'Python basics', creator: 'Test teacher', format: 'Course', tier: 2, subject: 'Computer science', url: 'https://example.com/python', description: '', notes: 'Functions and small programs.', status: 'learning', progress: 40, createdAt: date, updatedAt: date },
+    { id: 'writing', title: 'Clear prose', creator: 'Test writer', format: 'Book', tier: 1, subject: 'Writing', url: '', description: '', notes: '', status: 'planned', progress: 0, createdAt: date, updatedAt: date },
   ],
   practice: [
     { id: 'essay', title: 'Explaining a matrix', format: 'Essay', subject: 'Mathematics', resourceId: 'vectors', url: '', content: 'A matrix describes a transformation.\n\nThe basis vectors show what it does.', status: 'finished', createdAt: date, updatedAt: date },
@@ -61,6 +61,38 @@ test('search, combined filters, sorting and status tabs find published resources
   await page.getByRole('button', { name: 'Completed 1', exact: true }).click();
   await expect(page.locator('tbody tr')).toHaveCount(1);
   await expect(page.locator('tbody')).toContainText('Vectors and transformations');
+});
+
+test('resource tiers filter and sort independently of progress and explain the five levels', async ({ page }) => {
+  await useFixture(page);
+  const tiers = page.getByRole('combobox', { name: 'Filter by tier', exact: true });
+  await tiers.selectOption('2');
+  await expect(page.locator('tbody tr')).toHaveCount(1);
+  await expect(page.locator('tbody')).toContainText('Python basics');
+  await expect(page.locator('tbody')).toContainText('Tier 2 · Foundations');
+  await page.getByRole('button', { name: 'Details for Python basics' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toContainText('Tier 2 · Foundations');
+  await expect(dialog).toContainText('Builds on entry-level familiarity with the topic.');
+  await expect(dialog.getByRole('progressbar')).toHaveAttribute('value', '40');
+  await page.keyboard.press('Escape');
+  await tiers.selectOption('3');
+  await expect(page.locator('tbody')).toContainText('Vectors and transformations');
+  await expect(page.locator('tbody')).toContainText('Completed');
+  await tiers.selectOption('5');
+  await expect(page.getByRole('heading', { name: 'No matches here' })).toBeVisible();
+  await page.getByRole('button', { name: 'Clear filters', exact: true }).click();
+  await expect(tiers).toHaveValue('all');
+  await page.getByRole('combobox', { name: 'Sort collection' }).selectOption('tier');
+  await expect(page.locator('tbody tr').nth(0)).toContainText('Clear prose');
+  await expect(page.locator('tbody tr').nth(1)).toContainText('Python basics');
+  await expect(page.locator('tbody tr').nth(2)).toContainText('Vectors and transformations');
+  await page.getByRole('button', { name: 'About learning resources', exact: true }).click();
+  for (const label of ['Tier 1 · Entry point', 'Tier 2 · Foundations', 'Tier 3 · Intermediate', 'Tier 4 · Advanced', 'Tier 5 · Specialist']) await expect(dialog).toContainText(label);
+  await page.keyboard.press('Escape');
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: /^Practice/ }).click();
+  await expect(tiers).toHaveCount(0);
+  await expect(page.getByRole('columnheader', { name: 'Tier', exact: true })).toHaveCount(0);
 });
 
 test('header search filters commands and returns focus after actions and dismissal', async ({ page }) => {
@@ -207,6 +239,26 @@ test('publication validation rejects broken relationships without changing sourc
     const path = join(directory, 'library.json'); await writeFile(path, JSON.stringify(data));
     const result = spawnSync(process.execPath, ['--experimental-strip-types', 'scripts/validate-data.mjs', path], { encoding: 'utf8' });
     expect(result.status).toBe(1); expect(result.stderr).toContain('Invalid practice');
+    expect(await readFile('data/library.json', 'utf8')).toBe(before);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test('publication validation requires an integer resource tier from 1 to 5', async () => {
+  const before = await readFile('data/library.json', 'utf8');
+  const directory = await mkdtemp(join(tmpdir(), 'academy-tier-validation-'));
+  try {
+    const path = join(directory, 'library.json');
+    for (const tier of [1, 2, 3, 4, 5, undefined, null, 0, 6, 1.5, '2']) {
+      const data = { ...fixture, resources: [{ ...fixture.resources[0], tier }, ...fixture.resources.slice(1)] };
+      await writeFile(path, JSON.stringify(data));
+      const result = spawnSync(process.execPath, ['--experimental-strip-types', 'scripts/validate-data.mjs', path], { encoding: 'utf8' });
+      if (typeof tier === 'number' && Number.isInteger(tier) && tier >= 1 && tier <= 5) {
+        expect(result.status, `Tier ${tier} must be accepted`).toBe(0);
+      } else {
+        expect(result.status, `Tier ${String(tier)} must be rejected`).toBe(1);
+        expect(result.stderr).toContain('Invalid resources');
+      }
+    }
     expect(await readFile('data/library.json', 'utf8')).toBe(before);
   } finally { await rm(directory, { recursive: true, force: true }); }
 });

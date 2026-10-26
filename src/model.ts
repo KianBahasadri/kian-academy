@@ -1,7 +1,15 @@
 export const resourceFormats = ['Playlist', 'Course', 'Book', 'Textbook', 'Article', 'Other'] as const;
 export const practiceFormats = ['Essay', 'Video', 'Project', 'Notes', 'Other'] as const;
+export const resourceTiers = [
+  { value: 1, name: 'Entry point', description: 'Made for a general reader. No prior study, no university background, and a manageable scope for independent learning.' },
+  { value: 2, name: 'Foundations', description: 'Builds on entry-level familiarity with the topic.' },
+  { value: 3, name: 'Intermediate', description: 'Assumes established foundations and broader relevant reading.' },
+  { value: 4, name: 'Advanced', description: 'Assumes substantial knowledge of the subject and its methods.' },
+  { value: 5, name: 'Specialist', description: 'Written for specialists in a narrow area, beyond general expertise in the wider discipline.' },
+] as const;
 
 export type ResourceFormat = typeof resourceFormats[number];
+export type ResourceTier = typeof resourceTiers[number]['value'];
 export type PracticeFormat = typeof practiceFormats[number];
 export type ResourceStatus = 'planned' | 'learning' | 'completed';
 export type PracticeStatus = 'draft' | 'finished';
@@ -11,6 +19,7 @@ export interface Resource {
   title: string;
   creator: string;
   format: ResourceFormat;
+  tier: ResourceTier;
   subject: string;
   url: string;
   description: string;
@@ -65,7 +74,7 @@ export function parseLibrary(raw: string): Library {
   const dates = (value: Record<string, unknown>) => ['createdAt', 'updatedAt'].every(key => typeof value[key] === 'string' && Number.isFinite(Date.parse(value[key] as string)));
   const link = (value: unknown) => typeof value === 'string' && (value === '' || Boolean(safeUrl(value)));
   if (!object(data) || data.version !== 1 || !Array.isArray(data.resources) || !Array.isArray(data.practice)) throw new Error('Unsupported library');
-  if (!data.resources.every(r => object(r) && strings(r, ['id', 'title', 'creator', 'subject', 'description', 'notes']) && r.id && r.title && dates(r) && resourceFormats.includes(r.format as ResourceFormat) && ['planned', 'learning', 'completed'].includes(r.status as string) && typeof r.progress === 'number' && Number.isInteger(r.progress) && r.progress >= 0 && r.progress <= 100 && (r.status !== 'completed' || r.progress === 100) && (r.status !== 'planned' || r.progress === 0) && (r.status !== 'learning' || r.progress < 100) && link(r.url))) throw new Error('Invalid resources');
+  if (!data.resources.every(r => object(r) && strings(r, ['id', 'title', 'creator', 'subject', 'description', 'notes']) && r.id && r.title && dates(r) && resourceFormats.includes(r.format as ResourceFormat) && resourceTiers.some(tier => tier.value === r.tier) && ['planned', 'learning', 'completed'].includes(r.status as string) && typeof r.progress === 'number' && Number.isInteger(r.progress) && r.progress >= 0 && r.progress <= 100 && (r.status !== 'completed' || r.progress === 100) && (r.status !== 'planned' || r.progress === 0) && (r.status !== 'learning' || r.progress < 100) && link(r.url))) throw new Error('Invalid resources');
   const ids = new Set(data.resources.map(r => r.id));
   if (ids.size !== data.resources.length) throw new Error('Duplicate resources');
   if (!data.practice.every(p => object(p) && strings(p, ['id', 'title', 'subject', 'content']) && p.id && p.title && dates(p) && practiceFormats.includes(p.format as PracticeFormat) && ['draft', 'finished'].includes(p.status as string) && (p.resourceId === null || ids.has(p.resourceId)) && link(p.url))) throw new Error('Invalid practice');

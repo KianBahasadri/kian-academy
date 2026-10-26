@@ -2,6 +2,8 @@ import { useEffect, useId, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { Book, BookOpen, Check, ChevronDown, Code2, FileText, GraduationCap, Link2, NotebookPen, Play, Video, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { resourceTiers } from '../model';
+import type { ResourceTier } from '../model';
 
 const formatIcons: Record<string, LucideIcon> = {
   Playlist: Play, Course: GraduationCap, Book, Textbook: BookOpen, Article: FileText,
@@ -21,6 +23,10 @@ export function ResourceMark({ format, subject, large = false }: { format: strin
 export function Status({ value }: { value: string }) {
   const text: Record<string, string> = { planned: 'To learn', learning: 'In progress', completed: 'Completed', draft: 'Draft', finished: 'Finished' };
   return <span className={`status status-${value}`}>{value === 'completed' || value === 'finished' ? <Check size={13} /> : <span className="status-dot" />}{text[value] ?? value}</span>;
+}
+
+export function Tier({ value }: { value: ResourceTier }) {
+  return <span className="tier-label">Tier {value} · {resourceTiers[value - 1].name}</span>;
 }
 
 export function Select({ label, value, onChange, children, className = '' }: { label: string; value: string; onChange: (value: string) => void; children: ReactNode; className?: string }) {

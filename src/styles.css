@@ -173,6 +173,7 @@ main:focus { outline: none; }
 
 .table-scroll { width: 100%; max-height: max(320px, calc(100dvh - 435px)); overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line-strong) var(--canvas); }
 .collection-table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 920px; font-size: 14px; text-align: left; }
+.resources-table { min-width: 1060px; }
 .collection-table th { position: sticky; top: 0; z-index: 1; padding: 10px 18px 12px; background: var(--canvas); color: var(--muted); font-size: 12px; font-weight: 400; white-space: nowrap; border-bottom: 1px solid var(--line); }
 .collection-table td { border-bottom: 1px solid var(--line-soft); padding: 11px 18px; height: 77px; vertical-align: middle; }
 .collection-table tr:last-child td { border-bottom-color: transparent; }
@@ -197,6 +198,11 @@ main:focus { outline: none; }
 .format-label { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); white-space: nowrap; font-size: 13px; }
 .format-label > svg { color: var(--faint); }
 .subject-cell { color: var(--muted); white-space: nowrap; }
+.tier-label { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.tier-description { color: var(--muted); font-size: 13px; line-height: 1.7; }
+.tier-legend { display: grid; gap: 16px; margin: 16px 0 0; }
+.tier-legend dt { color: var(--ink); font-size: 13px; font-weight: 500; }
+.tier-legend dd { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
 .progress-cell { min-width: 156px; }
 .not-started { display: inline-flex; align-items: center; gap: 7px; color: var(--faint); font-size: 12px; white-space: nowrap; }
 .status-dot { display: inline-block; width: 6px; height: 6px; border: 1px solid currentColor; border-radius: 50%; flex-shrink: 0; }
@@ -344,7 +350,7 @@ tr:hover .row-external, tr:focus-within .row-external { opacity: 1; }
   .collection-tabs > button > span { font-size: 9px; padding-inline: 2px; }
   .toolbar { gap: 8px; margin-bottom: 14px; }
   .search-field { width: 100%; flex-basis: 100%; }
-  .toolbar > .select-wrap { flex: 1; }
+  .toolbar > .select-wrap { flex: 1 1 calc(50% - 4px); }
   .toolbar > .select-wrap select { width: 100%; font-size: 11px; }
   .toolbar-end { margin-left: 0; }
   .sort-control > svg { display: none; }
@@ -370,9 +376,11 @@ tr:hover .row-external, tr:focus-within .row-external { opacity: 1; }
   .format-label { font-size: 10px; gap: 5px; }
   .format-label svg { width: 12px; }
   .collection-table .subject-cell { display: none; }
-  .collection-table td:nth-child(4) { grid-column: 1; grid-row: 3; padding-left: 46px; margin-top: 5px; }
+  .collection-table .tier-cell, .collection-table .progress-cell, .practice-table td:nth-child(4) { grid-column: 1; grid-row: 3; padding-left: 46px; margin-top: 5px; }
+  .resources-table .progress-cell { grid-row: 4; }
+  .tier-label { font-size: 11px; }
   .not-started, .status { font-size: 11px; }
-  .collection-table td:nth-child(5) { grid-column: 2; grid-row: 3; align-self: end; }
+  .collection-table .resource-practice-cell { grid-column: 2; grid-row: 4; align-self: end; }
   .practice-count { min-height: 24px; padding: 0; font-size: 11px; }
   .table-progress { width: 150px; }
   .table-progress > div { margin-bottom: 4px; font-size: 10px; }
