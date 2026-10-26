@@ -1,159 +1,91 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Psych Roadmap</title>
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/tokens.css">
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/site.css">
-  <script>
-    (function () {
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Kian Academy: your personal learning platform, built around external resources, five tiers, preparation, practice, and progress.">
+    <meta name="color-scheme" content="light dark">
+    <title>Home | Kian Academy</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/site.css">
+    <script>
       try {
-        var stored = localStorage.getItem("psych-roadmap-theme");
-        var theme = stored === "light" || stored === "dark"
-          ? stored
-          : (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
-        document.documentElement.setAttribute("data-theme", theme);
-      } catch (error) {
-        document.documentElement.setAttribute("data-theme", "dark");
-      }
-    })();
-  </script>
-</head>
-<body>
-  <a class="skip-link sr-only" href="#main">Skip to content</a>
-
-  <svg class="icon-sprite" aria-hidden="true" focusable="false">
-    <defs>
-      <symbol id="lucide-search" viewBox="0 0 24 24">
-        <path d="m21 21-4.34-4.34"></path>
-        <circle cx="11" cy="11" r="8"></circle>
-      </symbol>
-      <symbol id="lucide-sun" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="4"></circle>
-        <path d="M12 2v2"></path>
-        <path d="M12 20v2"></path>
-        <path d="m4.93 4.93 1.41 1.41"></path>
-        <path d="m17.66 17.66 1.41 1.41"></path>
-        <path d="M2 12h2"></path>
-        <path d="M20 12h2"></path>
-        <path d="m6.34 17.66-1.41 1.41"></path>
-        <path d="m19.07 4.93-1.41 1.41"></path>
-      </symbol>
-      <symbol id="lucide-moon" viewBox="0 0 24 24">
-        <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"></path>
-      </symbol>
-      <symbol id="lucide-menu" viewBox="0 0 24 24">
-        <path d="M4 5h16"></path>
-        <path d="M4 12h16"></path>
-        <path d="M4 19h16"></path>
-      </symbol>
-      <symbol id="lucide-x" viewBox="0 0 24 24">
-        <path d="M18 6 6 18"></path>
-        <path d="m6 6 12 12"></path>
-      </symbol>
-    </defs>
-  </svg>
-
-  <button class="toc-trigger" id="tocTrigger" type="button" aria-label="Open table of contents" data-tooltip="Open table of contents" aria-haspopup="dialog" aria-controls="tocDrawer" aria-expanded="false">
-    <svg class="icon" aria-hidden="true" focusable="false"><use href="#lucide-menu"></use></svg>
-  </button>
-
-  <div class="page-tools">
-    <button class="spotlight-trigger" id="spotlightTrigger" type="button" aria-label="Open search and commands" aria-haspopup="dialog" aria-controls="spotlightDialog" aria-expanded="false" aria-keyshortcuts="Control+K Meta+K Control+Space">
-      <svg class="icon" aria-hidden="true" focusable="false"><use href="#lucide-search"></use></svg>
-    </button>
-    <button class="theme-toggle" id="themeToggleBtn" type="button" aria-label="Switch to light theme" data-tooltip="Switch to light theme">
-      <svg class="icon" id="themeIcon" aria-hidden="true" focusable="false"><use id="themeIconUse" href="#lucide-sun"></use></svg>
-    </button>
-  </div>
-
-  <dialog class="toc-drawer" id="tocDrawer" aria-labelledby="tocDrawerTitle">
-    <div class="toc-drawer-header">
-      <h2 id="tocDrawerTitle">Contents</h2>
-      <button class="toc-close" id="tocClose" type="button" aria-label="Close" data-tooltip="Close">
-        <svg class="icon" aria-hidden="true" focusable="false"><use href="#lucide-x"></use></svg>
-      </button>
-    </div>
-    <div class="toc-drawer-body" id="tocDrawerBody"></div>
-  </dialog>
-
-  <dialog class="spotlight-dialog" id="spotlightDialog" aria-label="Search and commands">
-    <div class="spotlight-search-field">
-      <svg class="icon spotlight-search-icon" aria-hidden="true" focusable="false"><use href="#lucide-search"></use></svg>
-      <input class="spotlight-input" id="spotlightInput" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="spotlightResults" aria-label="Search commands" autocomplete="off" spellcheck="false" placeholder="Search commands">
-    </div>
-    <ul class="spotlight-results" id="spotlightResults" role="listbox" aria-label="Commands"></ul>
-    <div class="sr-only" id="spotlightStatus" aria-live="polite"></div>
-  </dialog>
-
-  <dialog class="modal-dialog shortcut-dialog" id="shortcutsDialog" aria-labelledby="shortcutsTitle">
-    <div class="modal-header">
-      <h2 class="modal-title" id="shortcutsTitle">Keyboard shortcuts</h2>
-      <button class="btn-icon modal-close" type="button" aria-label="Close" data-tooltip="Close">
-        <svg class="icon" aria-hidden="true" focusable="false"><use href="#lucide-x"></use></svg>
-      </button>
-    </div>
-    <div class="modal-body">
-      <dl class="shortcut-list" id="shortcutList"></dl>
-    </div>
-  </dialog>
-
-  <dialog class="modal-dialog topic-dialog" id="topicDialog" aria-labelledby="topicTitle" aria-describedby="topicAbout">
-    <div class="modal-header">
-      <h2 class="modal-title" id="topicTitle" tabindex="-1"></h2>
-      <button class="btn-icon modal-close" id="topicClose" type="button" aria-label="Close" data-tooltip="Close">
-        <svg class="icon" aria-hidden="true" focusable="false"><use href="#lucide-x"></use></svg>
-      </button>
-    </div>
-    <div class="modal-body" id="topicBody">
-      <div class="topic-meta">
-        <span class="meta-tag" id="topicCode"></span>
-        <span class="badge badge-nominal" id="topicRole"></span>
-      </div>
-      <p class="about" id="topicAbout"></p>
-      <h3 class="dialog-heading">Covers</h3>
-      <ul class="covers" id="topicCovers"></ul>
-      <div id="topicFollowsBlock">
-        <h3 class="dialog-heading">Follows</h3>
-        <div class="related-list" id="topicFollows"></div>
-      </div>
-      <div id="topicLeadsBlock">
-        <h3 class="dialog-heading">Leads to</h3>
-        <div class="related-list" id="topicLeads"></div>
-      </div>
-      <p class="placeholder-note">No lessons or sources are attached yet.</p>
-    </div>
-    <div class="modal-footer" id="topicFooter" hidden>
-      <button class="btn btn-secondary" id="bridgeBtn" type="button"></button>
-    </div>
-  </dialog>
-
-  <div class="tooltip-bubble" id="tooltip" role="tooltip" popover="manual"></div>
-
-  <div class="layout">
-    <aside class="sidebar" id="sidebar">
-      <p class="brand">Psych Roadmap</p>
-      <div id="sidebarSlot">
-        <div id="navRoot">
-          <nav aria-label="Contents">
-            <p class="nav-label">Contents</p>
-            <ul class="nav-list" id="pathList"></ul>
-          </nav>
+        const theme = localStorage.getItem("psych-curriculum-theme");
+        if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+      } catch {}
+    </script>
+    <script src="js/curriculum.js" defer></script>
+    <script src="js/resource-map.js" defer></script>
+    <script src="js/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#page">Skip to content</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <nav class="primary-nav" aria-label="Primary navigation">
+          <a href="#home">Home</a>
+          <a href="#curriculum">Resources</a>
+          <a href="#map">Map</a>
+          <a class="mobile-progress-link" href="#progress">My progress</a>
+        </nav>
+        <a class="brand" href="#home" aria-label="Kian Academy home">
+          <svg class="brand-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="7" fill="#14bf96"/><path d="M16 11c-4-3-7-2-8-1v12c3-1 5-1 8 1m0-12c4-3 7-2 8-1v12c-3-1-5-1-8 1Zm0 0v12" stroke="white" stroke-width="1.7" stroke-linejoin="round"/></svg>
+          <span>Kian Academy</span>
+        </a>
+        <div class="header-tools">
+          <a class="header-progress" href="#progress">My progress</a>
+          <details class="settings-menu">
+            <summary aria-label="Learning settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="m10 3-.7 2.5L7 6.8l-2.5-.6-2 3.5L4.4 12l-1.9 2.3 2 3.5 2.5-.6 2.3 1.3L10 21h4l.7-2.5 2.3-1.3 2.5.6 2-3.5-1.9-2.3 1.9-2.3-2-3.5-2.5.6-2.3-1.3L14 3Z"/></svg></summary>
+            <div class="menu-items">
+              <button type="button" data-action="plan">Add a resource</button>
+              <button type="button" data-action="export">Download progress</button>
+              <button type="button" data-action="import">Restore progress…</button>
+              <button id="theme-toggle" type="button">Switch to dark appearance</button>
+            </div>
+          </details>
         </div>
       </div>
-    </aside>
-    <main class="content" id="main">
-      <noscript>
-        <p class="callout callout-info"><span class="callout-label">Script required:</span> this map is drawn in the browser.</p>
-      </noscript>
-      <div id="view"></div>
-    </main>
-  </div>
+    </header>
+    <button class="mobile-contents" id="contents-toggle" type="button" aria-expanded="false" aria-controls="course-nav">Curriculum <span>Resource activities ⌄</span></button>
+    <div class="course-layout">
+      <aside class="course-sidebar" id="course-nav" aria-label="Learning navigation">
+        <div id="course-navigation"></div>
+        <div class="sidebar-footer"><button type="button" class="text-button" data-action="plan">+ Add a resource</button><p id="save-status" role="status">Progress saved in this browser.</p></div>
+      </aside>
+      <main id="page" class="course-main" tabindex="-1"></main>
+    </div>
+    <p id="app-message" class="app-message" role="status" hidden></p>
+    <noscript><p><a href="https://www.youtube.com/playlist?list=PLzxlKUNNLxmEvjCSUAurMReJBZxaLdD1_" target="_blank" rel="noopener noreferrer">Open Robert Sapolsky’s Human Behavioral Biology lectures</a>. Enable JavaScript to use your curriculum.</p></noscript>
 
-  <script src="js/data.js"></script>
-  <script src="js/app.js"></script>
-</body>
+    <dialog id="resource-editor" aria-labelledby="editor-title">
+      <form id="resource-form">
+        <div class="dialog-heading"><h2 id="editor-title">Add a resource</h2><button class="icon-button" type="button" data-action="close-editor" aria-label="Close">×</button></div>
+        <label class="field">Resource title<input name="title" required maxlength="160" autocomplete="off" autofocus></label>
+        <label class="field">External link<input name="url" type="url" required placeholder="https://…" autocomplete="url"></label>
+        <label class="field">Creator <span class="optional">optional</span><input name="author" maxlength="160"></label>
+        <div class="editor-section">
+          <h3>Tier & topics</h3>
+          <label class="field">Tier<select name="tier" id="editor-tier"><option value="1">1 · Entry point</option><option value="2">2 · Foundations</option><option value="3">3 · Intermediate</option><option value="4">4 · Advanced</option><option value="5">5 · Specialist</option></select></label>
+          <p class="helper-text" id="editor-tier-description"></p>
+          <label class="field">Why this tier? <span class="optional">optional</span><textarea name="tierReason" rows="2" placeholder="Audience, assumed background, and scope."></textarea></label>
+          <label class="field">Topic tags<input name="tags" required maxlength="500" placeholder="e.g. psychology, cbt, depression" list="tag-options"><span class="helper-text">Separate tags with commas. Use as many overlapping topics as needed.</span></label>
+        </div>
+        <div class="editor-section" id="editor-prerequisites">
+          <h3>Specific prerequisites</h3>
+          <p class="helper-text" id="editor-specific-help"></p>
+          <div class="prerequisite-options" id="editor-specific-options"></div>
+          <h3 class="volume-editor-heading">Volume prerequisites</h3>
+          <p class="helper-text">Each rule counts completed resources at that exact tier with any of its tags. Named prerequisites also count. Every rule must be met.</p>
+          <div id="editor-volume-rules"></div>
+          <button type="button" class="text-button" id="add-volume-rule">+ Add a volume rule</button>
+          <label class="field">Preparation notes <span class="optional">optional</span><textarea name="preparationNote" rows="2" placeholder="What background is needed? Which resources still need finding?"></textarea></label>
+        </div>
+        <label class="field">Practice focus <span class="optional">optional</span><textarea name="focus" rows="3" placeholder="Topics or questions for your homework."></textarea></label>
+        <p id="editor-error" class="error-text" role="alert" hidden></p>
+        <div class="dialog-actions"><button class="button" type="button" data-action="close-editor">Cancel</button><button class="button button-primary" type="submit" id="save-resource">Add resource</button></div>
+      </form>
+    </dialog>
+    <datalist id="tag-options"></datalist>
+    <input id="import-file" type="file" accept="application/json,.json" hidden>
+  </body>
 </html>
