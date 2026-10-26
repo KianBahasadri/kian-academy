@@ -19,7 +19,7 @@ GitHub Actions validates the data, builds and tests the site, and deploys `dist/
 - **Resources** are books, textbooks, courses, playlists, articles, and other material. Update `status`, `progress`, and `notes` as you learn.
 - **Practice** is your own work: essays, videos, projects, and notes. Put writing in `content` or link published work in `url`. Set `resourceId` to a resource's `id`, or `null` for independent work.
 
-See [the data guide](data/README.md) for complete examples. The initial eight resource links are marked **To learn**, with no claimed progress; replace them with your own learning history. Practice starts empty.
+See [the data guide](data/README.md) for complete examples. The seven resources were restored from `js/curriculum.js` in commit `7642e74`, preserving their IDs, titles, authors, links, and study focuses. The historical catalog contained no saved learning progress or authored practice, so resources are marked **To learn** and practice is empty. Timestamps record when the resources were restored into the published library.
 
 Visitors browse published content. Learning data comes exclusively from the committed JSON file. The site has no accounts, backend, browser storage, cookies, or editing controls. Every entry in that file is public. Searches, filters, and theme changes last only for the current page session.
 
