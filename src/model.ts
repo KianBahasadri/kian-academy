@@ -1,11 +1,11 @@
 export const resourceFormats = ['Playlist', 'Course', 'Book', 'Textbook', 'Article', 'Other'] as const;
 export const practiceFormats = ['Essay', 'Video', 'Project', 'Notes', 'Other'] as const;
 export const resourceTiers = [
-  { value: 1, name: 'Entry point', description: 'Made for a general reader. No prior study, no university background, and a manageable scope for independent learning.' },
-  { value: 2, name: 'Foundations', description: 'Builds on entry-level familiarity with the topic.' },
-  { value: 3, name: 'Intermediate', description: 'Assumes established foundations and broader relevant reading.' },
-  { value: 4, name: 'Advanced', description: 'Assumes substantial knowledge of the subject and its methods.' },
-  { value: 5, name: 'Specialist', description: 'Written for specialists in a narrow area, beyond general expertise in the wider discipline.' },
+  { value: 1, description: 'Made for a general reader. No prior study, no university background, and a manageable scope for independent learning.' },
+  { value: 2, description: 'Builds on entry-level familiarity with the topic.' },
+  { value: 3, description: 'Assumes established foundations and broader relevant reading.' },
+  { value: 4, description: 'Assumes substantial knowledge of the subject and its methods.' },
+  { value: 5, description: 'Written for specialists in a narrow area, beyond general expertise in the wider discipline.' },
 ] as const;
 
 export type ResourceFormat = typeof resourceFormats[number];

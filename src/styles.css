@@ -195,6 +195,8 @@ main:focus { outline: none; }
 .resource-mark.sand { background: var(--sand-soft); color: var(--sand); }
 .resource-mark.green { background: var(--green-soft); color: var(--green); }
 .resource-mark.large { width: 52px; height: 60px; border-radius: 5px 7px 7px 5px; }
+.collection-table .resource-mark { background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+.collection-table .resource-mark::after { display: none; }
 .format-label { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); white-space: nowrap; font-size: 13px; }
 .format-label > svg { color: var(--faint); }
 .subject-cell { color: var(--muted); white-space: nowrap; }

@@ -66,13 +66,14 @@ test('search, combined filters, sorting and status tabs find published resources
 test('resource tiers filter and sort independently of progress and explain the five levels', async ({ page }) => {
   await useFixture(page);
   const tiers = page.getByRole('combobox', { name: 'Filter by tier', exact: true });
+  await expect(tiers.locator('option')).toHaveText(['All tiers', 'Tier 1', 'Tier 2', 'Tier 3', 'Tier 4', 'Tier 5']);
   await tiers.selectOption('2');
   await expect(page.locator('tbody tr')).toHaveCount(1);
   await expect(page.locator('tbody')).toContainText('Python basics');
-  await expect(page.locator('tbody')).toContainText('Tier 2 · Foundations');
+  await expect(page.getByRole('cell', { name: 'Tier 2', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Details for Python basics' }).click();
   const dialog = page.getByRole('dialog');
-  await expect(dialog).toContainText('Tier 2 · Foundations');
+  await expect(dialog.getByText('Tier 2', { exact: true })).toBeVisible();
   await expect(dialog).toContainText('Builds on entry-level familiarity with the topic.');
   await expect(dialog.getByRole('progressbar')).toHaveAttribute('value', '40');
   await page.keyboard.press('Escape');
@@ -88,7 +89,7 @@ test('resource tiers filter and sort independently of progress and explain the f
   await expect(page.locator('tbody tr').nth(1)).toContainText('Python basics');
   await expect(page.locator('tbody tr').nth(2)).toContainText('Vectors and transformations');
   await page.getByRole('button', { name: 'About learning resources', exact: true }).click();
-  for (const label of ['Tier 1 · Entry point', 'Tier 2 · Foundations', 'Tier 3 · Intermediate', 'Tier 4 · Advanced', 'Tier 5 · Specialist']) await expect(dialog).toContainText(label);
+  for (const value of [1, 2, 3, 4, 5]) await expect(dialog.getByText(`Tier ${value}`, { exact: true })).toBeVisible();
   await page.keyboard.press('Escape');
   await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: /^Practice/ }).click();
   await expect(tiers).toHaveCount(0);

@@ -13,7 +13,7 @@ export function CollectionInfo({ collection, onClose }: { collection: 'resources
         <p>To learn means not started, In progress shows ongoing learning, and Completed means finished. Progress and notes reflect Kian’s published updates.</p>
         <h3>Resource tiers</h3>
         <p>Tiers describe the intended audience and assumed knowledge, independently of learning progress.</p>
-        <dl className="tier-legend">{resourceTiers.map(tier => <div key={tier.value}><dt>Tier {tier.value} · {tier.name}</dt><dd>{tier.description}</dd></div>)}</dl>
+        <dl className="tier-legend">{resourceTiers.map(tier => <div key={tier.value}><dt>Tier {tier.value}</dt><dd>{tier.description}</dd></div>)}</dl>
       </> : <>
         <p>Kian’s own essays, videos, projects, and notes, created while learning.</p>
         <h3>Browsing</h3>

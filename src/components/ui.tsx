@@ -2,7 +2,6 @@ import { useEffect, useId, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { Book, BookOpen, Check, ChevronDown, Code2, FileText, GraduationCap, Link2, NotebookPen, Play, Video, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { resourceTiers } from '../model';
 import type { ResourceTier } from '../model';
 
 const formatIcons: Record<string, LucideIcon> = {
@@ -26,7 +25,7 @@ export function Status({ value }: { value: string }) {
 }
 
 export function Tier({ value }: { value: ResourceTier }) {
-  return <span className="tier-label">Tier {value} · {resourceTiers[value - 1].name}</span>;
+  return <span className="tier-label">Tier {value}</span>;
 }
 
 export function Select({ label, value, onChange, children, className = '' }: { label: string; value: string; onChange: (value: string) => void; children: ReactNode; className?: string }) {
