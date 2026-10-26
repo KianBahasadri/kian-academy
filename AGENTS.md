@@ -9,4 +9,5 @@ Read [README.md](README.md) for setup and [data/README.md](data/README.md) for t
 - Invalid learning data must fail the build. Do not silently replace or drop invalid entries or resource/practice relationships.
 - Run `npm run build`; run `npm test` for changes to interactions or published data handling. Tests use system Chromium or `CHROMIUM_PATH` on port 5175.
 - GitHub Pages deploys through `.github/workflows/deploy.yml` on pushes to `main`. Keep the build fully static and assets compatible with project URL prefixes.
+- Commit and push completed, validated changes regularly without waiting for a separate request. Publish through `main`, check the GitHub Actions deployment, and resolve failures before reporting the work deployed.
 - Development uses port 5174. Grakata in `~/warframe-toolkit` is a reference; do not modify it for this project.
