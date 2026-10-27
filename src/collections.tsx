@@ -77,9 +77,9 @@ export function collectionModel(library: Library): TableModel<LearningItem> {
   };
 }
 
-export function renderCollectionCell(item: LearningItem, column: TableColumn, visible: string[], library: Library, onPractice: (resourceId: string) => void, onResource: (id: string) => void) {
+export function renderCollectionCell(item: LearningItem, column: TableColumn, library: Library, onPractice: (resourceId: string) => void, onResource: (id: string) => void) {
   switch (column.key) {
-    case 'title': return <><ResourceMark format={item.format} subject={item.subject} /><span className="item-identity"><span>{item.title}</span>{'creator' in item ? !visible.includes('creator') && <small>{item.creator || item.subject}</small> : <small>{wordCount(item.content) ? `${wordCount(item.content).toLocaleString()} words` : item.url ? 'Linked work' : 'Draft'}</small>}</span></>;
+    case 'title': return <><ResourceMark format={item.format} subject={item.subject} /><span className="item-identity"><span>{item.title}</span>{'content' in item && <small>{wordCount(item.content) ? `${wordCount(item.content).toLocaleString()} words` : item.url ? 'Linked work' : 'Draft'}</small>}</span></>;
     case 'format': return <span className="format-label"><FormatIcon format={item.format} size={14} />{item.format}</span>;
     case 'tier': return 'tier' in item ? <span className="tier-label">{item.tier}</span> : null;
     case 'status': return <Status value={item.status} />;

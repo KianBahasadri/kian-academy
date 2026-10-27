@@ -30,7 +30,7 @@ const grid = (page: Page) => page.getByRole('region', { name: 'Resources table',
 const rowNames = (page: Page) => grid(page).locator('tbody .item-title').evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label')!.replace('Details for ', '')));
 const columnKeys = (page: Page) => grid(page).locator('thead th').evaluateAll(headers => headers.map(header => (header as HTMLElement).dataset.columnKey));
 async function options(page: Page, title: string) {
-  await page.getByRole('button', { name: `${title} column options`, exact: true }).click();
+  await page.getByRole('button', { name: `Sort by ${title}`, exact: true }).click({ button: 'right' });
   return page.getByRole('group', { name: `Column actions for ${title}`, exact: true });
 }
 
@@ -96,7 +96,7 @@ test('choice filters include or exclude several values and remain accessible whe
   await expect(menu.getByRole('checkbox', { name: 'Include Article', exact: true })).not.toBeChecked();
   await expect(grid(page).locator('tbody tr')).toHaveCount(3);
   await menu.getByRole('menuitem', { name: 'Hide column', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Format column options', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Sort by Format', exact: true })).toHaveCount(0);
   const chip = page.getByRole('button', { name: 'Format: Book except Article', exact: true });
   await chip.click();
   const filter = page.getByRole('group', { name: 'Filter Format', exact: true });
@@ -158,7 +158,7 @@ test('numeric condition dropdowns work inside column menus and Escape dismisses 
   await expect(grid(page).locator('tbody tr')).toHaveCount(4);
   await page.keyboard.press('Escape');
   await expect(menu).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Progress column options', exact: true })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Sort by Progress', exact: true })).toBeFocused();
   await expect(page.locator('select')).toHaveCount(0);
 });
 
@@ -190,6 +190,36 @@ test('column menus work by right click and keyboard, and widths reset after resi
   for (let index = 0; index < 20; index++) await page.keyboard.press('ArrowLeft');
   const primary = grid(page).locator('td.primary-cell').first();
   await expect.poll(() => primary.evaluate(cell => cell.querySelector('button')!.getBoundingClientRect().right <= cell.getBoundingClientRect().right - 11)).toBe(true);
+});
+
+test('touch and hold opens column options without sorting, while scrolling cancels the hold', async ({ browser, baseURL }) => {
+  const context = await browser.newContext({ baseURL, viewport: { width: 320, height: 844 }, hasTouch: true, isMobile: true });
+  try {
+    const page = await context.newPage();
+    await page.clock.install();
+    await load(page);
+    const heading = page.getByRole('button', { name: 'Sort by Resource', exact: true });
+    const header = grid(page).locator('th[data-column-key="title"]');
+    const menu = page.getByRole('group', { name: 'Column actions for Resource', exact: true });
+    const bounds = (await heading.boundingBox())!;
+    const point = { x: bounds.x + 20, y: bounds.y + bounds.height / 2 };
+    const client = await context.newCDPSession(page);
+    await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] });
+    await page.clock.fastForward(600);
+    await expect(menu).toBeVisible();
+    await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await expect(header).not.toHaveAttribute('aria-sort');
+    await page.keyboard.press('Escape');
+    await expect(menu).toHaveCount(0);
+    await expect(heading).toBeFocused();
+    await heading.tap();
+    await expect(header).toHaveAttribute('aria-sort', 'ascending');
+    await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] });
+    await client.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ ...point, y: point.y + 24 }] });
+    await page.clock.fastForward(600);
+    await expect(menu).toHaveCount(0);
+    await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  } finally { await context.close(); }
 });
 
 test('dragging headers moves a column and Escape cancels a later drag', async ({ page }) => {

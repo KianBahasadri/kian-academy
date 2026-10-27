@@ -131,7 +131,7 @@ export default function App() {
       </div>
       <CollectionTable<LearningItem> key={page} label={isResources ? 'Resources' : 'Practice'} columns={isResources ? resourceColumns : practiceDefinition} defaults={isResources ? defaultResourceColumns : defaultPracticeColumns} rows={candidates} allRows={collection} model={model} rowLabel={item => item.title} view={tableViews[page]} onViewChange={updateTable} onColumnFilter={updateColumnFilter} onResetFilters={clearFilters} hasFilters={hasFilters}
         onOpen={item => setModal({ type: 'creator' in item ? 'resource' : 'practice', id: item.id })}
-        renderCell={(item, column, visible) => renderCollectionCell(item, column, visible, library, viewPractice, id => setModal({ type: 'resource', id }))}
+        renderCell={(item, column) => renderCollectionCell(item, column, library, viewPractice, id => setModal({ type: 'resource', id }))}
         emptyTitle={isResources ? 'No resources published yet' : 'No practice published yet'} emptyDescription={isResources ? 'Books, playlists, and courses will appear here.' : 'Published essays, videos, and projects will appear here.'}
         toolbar={<>
           <div className="search-field"><Search size={16} aria-hidden="true" /><input ref={searchRef} type="search" aria-label={isResources ? 'Search resources' : 'Search practice'} placeholder={isResources ? 'Search resources…' : 'Search published work…'} value={filters.search} onChange={event => updateFilters({ search: event.target.value })} />{filters.search && <button type="button" className="clear-search" aria-label="Clear search" onClick={() => { updateFilters({ search: '' }); searchRef.current?.focus(); }}><X size={13} aria-hidden="true" /></button>}</div>

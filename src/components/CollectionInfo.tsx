@@ -22,7 +22,7 @@ export function CollectionInfo({ collection, onClose }: { collection: 'resources
         <p>Practice can be linked to the learning material it builds on, or marked Independent. Use the resource filter to explore related work when practice is available.</p>
       </>}
       <h3>Table controls</h3>
-      <p>Use Columns to show or hide fields and reset the layout. Drag a column header to move it, or use Move left and Move right in its column options. Drag the right edge to resize a column.</p>
+      <p>Use Columns to show or hide fields and reset the layout. Right-click or touch and hold a heading, or focus it and press Shift+F10, to open its column options. Drag a header to move it, or use Move left and Move right in its options. Drag the right edge to resize a column.</p>
       <p>Select a heading to cycle through ascending, descending, and unsorted. Sorting several columns adds priorities; column options can change their order. Each column also has its own filters, including include and exclude choices. Active filters stay visible even when their column is hidden.</p>
       <p>Export CSV downloads all matching rows using the visible columns in their current order. Table settings last for the current page session and reset on reload.</p>
     </div>

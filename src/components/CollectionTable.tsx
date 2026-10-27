@@ -1,6 +1,6 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
-import { ArrowDown, ArrowDownToLine, ArrowUp, Filter, MoreHorizontal, Search, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowDown, ArrowDownToLine, ArrowUp, Filter, Search, SlidersHorizontal, X } from 'lucide-react';
 import { createTableView, cycleColumnSort, filterChoices, filterLabel, filterRows, moveColumn, moveColumnSort, setColumnSort, sortRows } from '../table';
 import type { ColumnDropTarget, ColumnFilter, TableColumn, TableModel, TableView } from '../table';
 import { ColumnMenu, ColumnPicker } from './ColumnControls';
@@ -85,7 +85,9 @@ export function CollectionTable<Row extends { id: string }>({ label, columns: av
       if (reveal) button?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     });
   };
-  const drag = useColumnDrag(grid, (key, target) => reorder(key, target, false), () => setMenu(null));
+  const drag = useColumnDrag(grid, (key, target) => reorder(key, target, false), () => setMenu(null), key => {
+    if (menu?.key !== key) openMenu(key, headerButtons.current.get(key)!);
+  });
   const sortColumn = (key: string, direction: 1 | -1 | 0) => onViewChange(current => ({ ...current,
     sorting: setColumnSort(current.sorting, key, direction),
     preferences: direction && !current.preferences.visible.includes(key) ? { ...current.preferences, visible: [...current.preferences.visible, key] } : current.preferences,
@@ -130,7 +132,7 @@ export function CollectionTable<Row extends { id: string }>({ label, columns: av
     <span className="sr-only" role="status">{announcement}</span>
     <div ref={grid} className="table-scroll collection-grid" role="region" aria-label={`${label} table`} tabIndex={0}>
       <table className={`collection-table${fixed ? ' fixed-columns' : ''}`} style={fixed ? { tableLayout: 'fixed', width: columns.reduce((sum, column) => sum + (view.widths[column.key] ?? column.width ?? 140), 0) } : undefined}>
-        <caption className="sr-only">Published {label.toLowerCase()}. Select a title to open details. Sort with column headings. Drag headers to reorder; open column options or press Shift+F10 for filters and more actions. Resize columns by dragging their right edge or using Left and Right on the resize control.</caption>
+        <caption className="sr-only">Published {label.toLowerCase()}. Select a title to open details. Sort with column headings. Drag headers to reorder; right-click or touch and hold a heading, or press Shift+F10, for filters and more actions. Resize columns by dragging their right edge or using Left and Right on the resize control.</caption>
         <colgroup>{columns.map(column => <col key={column.key} style={fixed ? { width: view.widths[column.key] ?? column.width ?? 140 } : undefined} />)}</colgroup>
         <thead><tr>{columns.map(column => {
           const priority = view.sorting.findIndex(sort => sort.key === column.key);
@@ -140,7 +142,6 @@ export function CollectionTable<Row extends { id: string }>({ label, columns: av
             onContextMenu={event => { event.preventDefault(); openMenu(column.key, headerButtons.current.get(column.key)!, event.clientX || event.clientY ? { x: event.clientX, y: event.clientY } : undefined); }}
             onKeyDown={event => { if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) { event.preventDefault(); event.stopPropagation(); openMenu(column.key, event.target as HTMLElement); } }}>
             <div className="column-header"><button ref={node => { if (node) headerButtons.current.set(column.key, node); else headerButtons.current.delete(column.key); }} type="button" className="sort-button" aria-label={`Sort by ${column.title}`} aria-describedby={descriptionId} onClick={() => onViewChange(current => ({ ...current, sorting: cycleColumnSort(current.sorting, column.key) }))}><span className="column-title">{column.title}</span><span className="sort-indicator" aria-hidden="true">{sort && <>{sort.direction === 1 ? <ArrowUp size={14} /> : <ArrowDown size={14} />}{priority + 1}</>}</span></button>
-              <button type="button" className="icon-button column-options-button" aria-label={`${column.title} column options`} title={`${column.title} column options`} aria-expanded={menu?.key === column.key} onClick={event => openMenu(column.key, event.currentTarget)}><MoreHorizontal size={15} aria-hidden="true" /></button>
             </div>
             <span id={descriptionId} className="sr-only">{sort ? `Sort priority ${priority + 1} of ${view.sorting.length}, ${sort.direction === 1 ? 'ascending' : 'descending'}` : 'Unsorted'}</span>
             <div role="separator" tabIndex={0} className="column-resize-handle" aria-label={`Resize ${column.title} column`} aria-orientation="vertical" aria-valuemin={column.minWidth ?? 84} aria-valuemax={column.maxWidth ?? 640} aria-valuenow={Math.round(view.widths[column.key] ?? naturalWidths.current[column.key] ?? column.width ?? 140)}

@@ -6,9 +6,10 @@ import { columnSlideDuration, createColumnDragPreview } from './columnDragPrevie
 
 // The real table owns data, focus, and scrolling. Drag previews and target markers
 // stay outside React so crossing a column never renders the entire collection.
-export function useColumnDrag(container: RefObject<HTMLDivElement | null>, onDrop: (key: string, target: ColumnDropTarget) => void, onStart: () => void) {
+export function useColumnDrag(container: RefObject<HTMLDivElement | null>, onDrop: (key: string, target: ColumnDropTarget) => void, onStart: () => void, onLongPress: (key: string) => void) {
   const drop = useRef(onDrop); drop.current = onDrop;
   const start = useRef(onStart); start.current = onStart;
+  const longPress = useRef(onLongPress); longPress.current = onLongPress;
   const cleanup = useRef<(() => void) | null>(null);
   const suppressClick = useRef(false);
   useEffect(() => () => cleanup.current?.(), []);
@@ -29,7 +30,7 @@ export function useColumnDrag(container: RefObject<HTMLDivElement | null>, onDro
     const original = columns.map(column => column.key);
     const originalIndex = original.indexOf(key);
     let order = original;
-    let x = startX, y = startY, active = false, frame = 0, lastFrame = 0, settling = 0;
+    let x = startX, y = startY, active = false, frame = 0, lastFrame = 0, settling = 0, holdTimer = 0;
     let destination: ColumnDropTarget | null = null;
     let overPinnedStart = false;
     let preview: ReturnType<typeof createColumnDragPreview> | null = null;
@@ -72,6 +73,7 @@ export function useColumnDrag(container: RefObject<HTMLDivElement | null>, onDro
       frame = requestAnimationFrame(tick);
     };
     const stopInput = () => {
+      clearTimeout(holdTimer);
       cancelAnimationFrame(frame);
       document.removeEventListener('pointermove', move);
       document.removeEventListener('pointerup', finish);
@@ -104,6 +106,7 @@ export function useColumnDrag(container: RefObject<HTMLDivElement | null>, onDro
     const move = (next: PointerEvent) => {
       if (next.pointerId !== pointerId) return;
       x = next.clientX; y = next.clientY;
+      if (Math.hypot(x - startX, y - startY) >= 6) clearTimeout(holdTimer);
       if (!active && Math.abs(x - startX) >= 6 && Math.abs(x - startX) > Math.abs(y - startY)) {
         active = true;
         suppressClick.current = true;
@@ -137,6 +140,11 @@ export function useColumnDrag(container: RefObject<HTMLDivElement | null>, onDro
     };
     const wheel = (event: WheelEvent) => { if (active) event.preventDefault(); };
     cleanup.current = dispose;
+    if (event.pointerType === 'touch') holdTimer = window.setTimeout(() => {
+      suppressClick.current = true;
+      end(false, true);
+      longPress.current(key);
+    }, 550);
     document.addEventListener('pointermove', move, { passive: false });
     document.addEventListener('pointerup', finish);
     document.addEventListener('pointercancel', cancel);
@@ -152,6 +160,10 @@ export function useColumnDrag(container: RefObject<HTMLDivElement | null>, onDro
     headerProps: (key: string) => ({
       onPointerDown: (event: ReactPointerEvent<HTMLTableCellElement>) => begin(key, event),
       onDragStart: (event: DragEvent) => event.preventDefault(),
+      onMouseDownCapture: (event: MouseEvent) => {
+        // Touch compatibility events must not move focus out of an opened menu.
+        if (suppressClick.current && event.button === 0) event.preventDefault();
+      },
       onClickCapture: (event: MouseEvent) => {
         if (suppressClick.current && event.detail > 0) { event.preventDefault(); event.stopPropagation(); }
       },
