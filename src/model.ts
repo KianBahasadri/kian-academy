@@ -14,6 +14,16 @@ export type PracticeFormat = typeof practiceFormats[number];
 export type ResourceStatus = 'planned' | 'learning' | 'completed';
 export type PracticeStatus = 'draft' | 'finished';
 
+export interface ResourcePublication {
+  year: number;
+  publisher: string;
+  edition?: string;
+  binding?: string;
+  isbn?: string;
+  pages?: number;
+  sourceUrl: string;
+}
+
 export interface Resource {
   id: string;
   title: string;
@@ -24,6 +34,7 @@ export interface Resource {
   url: string;
   description: string;
   notes: string;
+  publication?: ResourcePublication;
   status: ResourceStatus;
   progress: number;
   createdAt: string;
@@ -66,6 +77,12 @@ export function wordCount(text: string): number {
   return text.trim() ? text.trim().split(/\s+/).length : 0;
 }
 
+function validIsbn13(value: unknown): boolean {
+  if (typeof value !== 'string') return false;
+  const digits = value.replace(/[ -]/g, '');
+  return /^97[89]\d{10}$/.test(digits) && [...digits].reduce((sum, digit, index) => sum + Number(digit) * (index % 2 ? 3 : 1), 0) % 10 === 0;
+}
+
 // Invalid published data must fail the build instead of being silently replaced.
 export function parseLibrary(raw: string): Library {
   const data: unknown = JSON.parse(raw);
@@ -73,8 +90,19 @@ export function parseLibrary(raw: string): Library {
   const strings = (value: Record<string, unknown>, keys: string[]) => keys.every(key => typeof value[key] === 'string');
   const dates = (value: Record<string, unknown>) => ['createdAt', 'updatedAt'].every(key => typeof value[key] === 'string' && Number.isFinite(Date.parse(value[key] as string)));
   const link = (value: unknown) => typeof value === 'string' && (value === '' || Boolean(safeUrl(value)));
+  const publication = (value: unknown, book: boolean) => {
+    if (value === undefined) return true;
+    if (!object(value)) return false;
+    return typeof value.year === 'number' && Number.isInteger(value.year) && value.year > 0 && value.year <= 9999 &&
+      typeof value.publisher === 'string' && value.publisher.trim().length > 0 &&
+      ['edition', 'binding'].every(key => value[key] === undefined || (typeof value[key] === 'string' && (value[key] as string).trim().length > 0)) &&
+      (book ? validIsbn13(value.isbn) : value.isbn === undefined) &&
+      (value.pages === undefined || (typeof value.pages === 'number' && Number.isInteger(value.pages) && value.pages > 0)) &&
+      typeof value.sourceUrl === 'string' && Boolean(safeUrl(value.sourceUrl));
+  };
   if (!object(data) || data.version !== 1 || !Array.isArray(data.resources) || !Array.isArray(data.practice)) throw new Error('Unsupported library');
   if (!data.resources.every(r => object(r) && strings(r, ['id', 'title', 'creator', 'subject', 'description', 'notes']) && r.id && r.title && dates(r) && resourceFormats.includes(r.format as ResourceFormat) && resourceTiers.some(tier => tier.value === r.tier) && ['planned', 'learning', 'completed'].includes(r.status as string) && typeof r.progress === 'number' && Number.isInteger(r.progress) && r.progress >= 0 && r.progress <= 100 && (r.status !== 'completed' || r.progress === 100) && (r.status !== 'planned' || r.progress === 0) && (r.status !== 'learning' || r.progress < 100) && link(r.url))) throw new Error('Invalid resources');
+  if (!data.resources.every(r => publication(r.publication, r.format === 'Book' || r.format === 'Textbook'))) throw new Error('Invalid resource publication metadata');
   const ids = new Set(data.resources.map(r => r.id));
   if (ids.size !== data.resources.length) throw new Error('Duplicate resources');
   if (!data.practice.every(p => object(p) && strings(p, ['id', 'title', 'subject', 'content']) && p.id && p.title && dates(p) && practiceFormats.includes(p.format as PracticeFormat) && ['draft', 'finished'].includes(p.status as string) && (p.resourceId === null || ids.has(p.resourceId)) && link(p.url))) throw new Error('Invalid practice');

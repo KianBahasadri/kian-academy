@@ -273,11 +273,17 @@ progress::-moz-progress-bar { background: var(--accent); border-radius: 2px; }
 .eyebrow > span { color: var(--faint); }
 .detail-title { font-size: 25px; font-weight: 500; line-height: 1.35; letter-spacing: -.025em; overflow-wrap: anywhere; }
 .detail-creator { color: var(--muted); font-size: 13px; margin-top: 7px; }
+.resource-bibliography { display: grid; grid-template-columns: minmax(0, 128px) minmax(0, 1fr); gap: 10px 16px; margin: 24px 0 0; font-size: 13px; line-height: 1.5; }
+.resource-bibliography dt { color: var(--muted); }
+.resource-bibliography dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.bibliographic-record { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+.bibliographic-record:hover { color: var(--ink-strong); }
 .detail-description { color: var(--muted); font-size: 14px; line-height: 1.7; margin-top: 20px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .detail-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 21px; }
 .source-host { display: flex; align-items: center; gap: 6px; margin-top: 12px; font-size: 11px; color: var(--faint); overflow-wrap: anywhere; }
 .detail-section { margin-top: 27px; padding-top: 25px; border-top: 1px solid var(--line); }
 .detail-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
+.detail-section-heading:last-child { margin-bottom: 0; }
 .detail-section-heading h3 { display: inline-flex; gap: 7px; align-items: center; }
 .detail-section-heading .count { height: 19px; min-width: 20px; font-size: 10px; padding: 1px 5px; }
 .detail-section > textarea { width: 100%; font-size: 13px; }

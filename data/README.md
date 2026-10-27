@@ -38,6 +38,24 @@ Formats: `Playlist`, `Course`, `Book`, `Textbook`, `Article`, `Other`.
 
 Statuses: `planned` requires progress `0`; `learning` accepts integer progress `0`–`99`; `completed` requires `100`. The site displays these as To learn, In progress, and Completed. Subject is free text. Creator, URL, description, and notes can be empty strings. Use an HTTP(S) URL when present.
 
+Resource panels use optional `publication` metadata:
+
+```json
+{
+  "year": 2023,
+  "publisher": "The Guilford Press",
+  "edition": "4th",
+  "binding": "Hardcover",
+  "isbn": "9781462552795",
+  "pages": 338,
+  "sourceUrl": "https://www.guilford.com/books/Motivational-Interviewing/Miller-Rollnick/9781462552795"
+}
+```
+
+When supplied, `publication` requires a positive integer year, publisher, and HTTP(S) source URL. Books and textbooks also require a valid ISBN-13, including its checksum. Edition, binding, and positive integer page count are optional. ISBN, year, binding, and page count must describe the same edition. The publication year is the year of that edition, not necessarily the work's first publication. Missing metadata is omitted from the panel.
+
+Leave descriptions empty unless Kian supplies or approves the text. Do not generate audience descriptions or study prompts. Notes are reserved for Kian's own learning notes. Bibliographic records link to the publisher or catalog that supports the metadata.
+
 ## Practice
 
 ```json
