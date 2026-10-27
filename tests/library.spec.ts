@@ -74,7 +74,7 @@ test('resource tiers filter and sort independently of progress and explain the f
   await chooseOption(page, 'Filter by tier', 'Tier 2');
   await expect(page.locator('tbody tr')).toHaveCount(1);
   await expect(page.locator('tbody')).toContainText('Python basics');
-  await expect(page.getByRole('cell', { name: 'Tier 2', exact: true })).toBeVisible();
+  await expect(page.locator('tbody td[data-column-key="tier"]')).toHaveText('2');
   await page.getByRole('button', { name: 'Details for Python basics' }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByText('Tier 2', { exact: true })).toBeVisible();
