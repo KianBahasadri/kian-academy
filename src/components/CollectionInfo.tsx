@@ -6,7 +6,6 @@ export function CollectionInfo({ collection, onClose }: { collection: 'resources
   return <Dialog title={isResources ? 'About learning resources' : 'About practice'} onClose={onClose}>
     <div className="dialog-body collection-info">
       {isResources ? <>
-        <p>The books, textbooks, courses, playlists, and articles in Kian’s learning collection.</p>
         <h3>Browsing</h3>
         <p>Search or filter by status, subject, format, and tier. Select a resource to read its description and notes, see related practice, or open the original material.</p>
         <h3>Learning progress</h3>
