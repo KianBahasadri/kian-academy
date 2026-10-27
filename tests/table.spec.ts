@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import type { Library, Resource } from '../src/model';
 import { filterRows, sortRows } from '../src/table';
+import { chooseOption } from './helpers';
 
 const date = '2026-10-26T12:00:00Z';
 const resource = (id: string, title: string, patch: Partial<Resource> = {}): Resource => ({ id, title, creator: 'Ann', format: 'Book', tier: 2, subject: 'Psychology', url: '', description: '', notes: '', status: 'learning', progress: 40, createdAt: date, updatedAt: date, ...patch });
@@ -110,10 +111,10 @@ test('choice filters include or exclude several values and remain accessible whe
 test('column filters combine across fields and numeric filters respect validity and global controls', async ({ page }) => {
   await load(page);
   const menu = await options(page, 'Progress');
-  await menu.getByRole('combobox', { name: 'Progress condition', exact: true }).selectOption('atLeast');
+  await chooseOption(page, 'Progress condition', 'At least');
   await menu.getByRole('spinbutton', { name: 'Filter progress', exact: true }).fill('40');
   await expect(grid(page).locator('tbody tr')).toHaveCount(4);
-  await menu.getByRole('combobox', { name: 'Progress condition', exact: true }).selectOption('atMost');
+  await chooseOption(page, 'Progress condition', 'At most');
   await expect(grid(page).locator('tbody tr')).toHaveCount(4);
   await menu.getByRole('spinbutton', { name: 'Filter progress', exact: true }).fill('40.5');
   await expect(menu.getByRole('spinbutton')).toHaveAttribute('aria-invalid', 'true');
@@ -124,12 +125,41 @@ test('column filters combine across fields and numeric filters respect validity 
   await page.keyboard.press('Escape');
   expect(await rowNames(page)).toEqual(['Epsilon', 'Alpha']);
   await page.getByRole('button', { name: 'Filters', exact: true }).click();
-  await page.getByRole('combobox', { name: 'Filter by format', exact: true }).selectOption('Article');
+  await chooseOption(page, 'Filter by format', 'Article');
   await expect(page.getByRole('button', { name: 'Remove Format filter', exact: true })).toHaveCount(0);
   expect(await rowNames(page)).toEqual(['Beta']);
   await page.getByRole('button', { name: 'Reset filters', exact: true }).click();
   await expect(grid(page).locator('tbody tr')).toHaveCount(5);
   await expect(page.getByRole('group', { name: 'Column filters', exact: true })).toHaveCount(0);
+});
+
+test('numeric condition dropdowns work inside column menus and Escape dismisses one layer at a time', async ({ page }) => {
+  await load(page);
+  const menu = await options(page, 'Progress');
+  const condition = menu.getByRole('combobox', { name: 'Progress condition', exact: true });
+  const list = page.getByRole('listbox', { name: 'Progress condition', exact: true });
+  await condition.fill('least');
+  await expect(list.getByRole('option')).toHaveText(['At least']);
+  await condition.press('Enter');
+  await expect(menu).toBeVisible();
+  await expect(condition).toHaveValue('At least');
+  await menu.getByRole('spinbutton', { name: 'Filter progress', exact: true }).fill('50');
+  expect(await rowNames(page)).toEqual(['Gamma']);
+  await condition.click(); await condition.press('ArrowDown');
+  await condition.press('Escape');
+  await expect(condition).toHaveValue('At least');
+  await expect(condition).toBeFocused();
+  await expect(menu).toBeVisible();
+  await expect(list).toHaveCount(0);
+  await condition.click();
+  await list.getByRole('option', { name: 'At most', exact: true }).click();
+  await expect(menu).toBeVisible();
+  await expect(condition).toBeFocused();
+  await expect(grid(page).locator('tbody tr')).toHaveCount(4);
+  await page.keyboard.press('Escape');
+  await expect(menu).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Progress column options', exact: true })).toBeFocused();
+  await expect(page.locator('select')).toHaveCount(0);
 });
 
 test('column menus work by right click and keyboard, and widths reset after resizing', async ({ page }) => {
@@ -217,7 +247,7 @@ test('column preferences and filters reset on reload without browser storage', a
 test('CSV exports matching rows and visible column order with correct quoting', async ({ page }) => {
   await load(page);
   await page.getByRole('button', { name: 'Filters', exact: true }).click();
-  await page.getByRole('combobox', { name: 'Filter by format', exact: true }).selectOption('Book');
+  await chooseOption(page, 'Filter by format', 'Book');
   await page.getByRole('button', { name: 'Columns', exact: true }).click();
   const picker = page.getByRole('group', { name: 'Table columns', exact: true });
   await picker.getByRole('checkbox', { name: 'Notes', exact: true }).check();
@@ -264,12 +294,12 @@ test('quick filters collapse while keeping active fields reachable and reset res
   await expect(filters).toHaveAttribute('aria-expanded', 'false');
   await expect(page.getByRole('combobox', { name: 'Filter by format', exact: true })).toHaveCount(0);
   await filters.click();
-  await page.getByRole('combobox', { name: 'Filter by format', exact: true }).selectOption('Book');
+  await chooseOption(page, 'Filter by format', 'Book');
   await filters.click();
   await expect(page.getByRole('group', { name: 'Active resources filters', exact: true })).toBeVisible();
   await expect(page.getByRole('combobox', { name: 'Filter by format', exact: true })).toHaveValue('Book');
   await expect(page.getByRole('combobox', { name: 'Filter by subject', exact: true })).toHaveCount(0);
-  await page.getByRole('combobox', { name: 'Filter by format', exact: true }).selectOption('all');
+  await chooseOption(page, 'Filter by format', 'All formats');
   await expect(filters).toBeFocused();
   await expect(grid(page).locator('tbody tr')).toHaveCount(5);
 });

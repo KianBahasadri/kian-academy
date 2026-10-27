@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import type { Library } from '../src/model';
+import { chooseOption } from './helpers';
 
 const published = JSON.parse(readFileSync('data/library.json', 'utf8')) as Library;
 
@@ -49,8 +50,8 @@ test('loads committed data without browser storage or account/API requests', asy
 test('search, combined filters, sorting and status tabs find published resources', async ({ page }) => {
   await useFixture(page);
   await page.getByRole('button', { name: 'Filters', exact: true }).click();
-  await page.getByRole('combobox', { name: 'Filter by subject' }).selectOption('Mathematics');
-  await page.getByRole('combobox', { name: 'Filter by format' }).selectOption('Playlist');
+  await chooseOption(page, 'Filter by subject', 'Mathematics');
+  await chooseOption(page, 'Filter by format', 'Playlist');
   await page.getByRole('searchbox').fill('scaling');
   await expect(page.locator('tbody tr')).toHaveCount(1);
   await expect(page.locator('tbody')).toContainText('Vectors and transformations');
@@ -68,8 +69,9 @@ test('resource tiers filter and sort independently of progress and explain the f
   await useFixture(page);
   await page.getByRole('button', { name: 'Filters', exact: true }).click();
   const tiers = page.getByRole('combobox', { name: 'Filter by tier', exact: true });
-  await expect(tiers.locator('option')).toHaveText(['All tiers', 'Tier 1', 'Tier 2', 'Tier 3', 'Tier 4', 'Tier 5']);
-  await tiers.selectOption('2');
+  await tiers.click();
+  await expect(page.getByRole('listbox', { name: 'Filter by tier', exact: true }).getByRole('option')).toHaveText(['All tiers', 'Tier 1', 'Tier 2', 'Tier 3', 'Tier 4', 'Tier 5']);
+  await chooseOption(page, 'Filter by tier', 'Tier 2');
   await expect(page.locator('tbody tr')).toHaveCount(1);
   await expect(page.locator('tbody')).toContainText('Python basics');
   await expect(page.getByRole('cell', { name: 'Tier 2', exact: true })).toBeVisible();
@@ -79,18 +81,18 @@ test('resource tiers filter and sort independently of progress and explain the f
   await expect(dialog).toContainText('Builds on entry-level familiarity with the topic.');
   await expect(dialog.getByRole('progressbar')).toHaveAttribute('value', '40');
   await page.keyboard.press('Escape');
-  await tiers.selectOption('3');
+  await chooseOption(page, 'Filter by tier', 'Tier 3');
   await expect(page.locator('tbody')).toContainText('Vectors and transformations');
   await expect(page.locator('tbody')).toContainText('Completed');
-  await tiers.selectOption('5');
+  await chooseOption(page, 'Filter by tier', 'Tier 5');
   await expect(page.getByRole('heading', { name: 'No matches here' })).toBeVisible();
   await page.getByRole('button', { name: 'Clear filters', exact: true }).click();
-  await expect(tiers).toHaveValue('all');
+  await expect(tiers).toHaveValue('All tiers');
   await page.getByRole('button', { name: 'Sort by Tier', exact: true }).click();
   await expect(page.locator('tbody tr').nth(0)).toContainText('Clear prose');
   await expect(page.locator('tbody tr').nth(1)).toContainText('Python basics');
   await expect(page.locator('tbody tr').nth(2)).toContainText('Vectors and transformations');
-  await page.getByRole('button', { name: 'About learning resources', exact: true }).click();
+  await page.getByRole('button', { name: 'Help', exact: true }).click();
   for (const value of [1, 2, 3, 4, 5]) await expect(dialog.getByText(`Tier ${value}`, { exact: true })).toBeVisible();
   await page.keyboard.press('Escape');
   await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: /^Practice/ }).click();
@@ -149,9 +151,9 @@ test('command navigation and shortcuts work on phones without page overflow', as
   await input.fill('practice');
   await expect(pages.getByRole('option', { name: 'Practice', exact: true })).toBeVisible();
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('heading', { name: 'Practice', exact: true })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: /^Practice/ })).toHaveAttribute('aria-current', 'page');
   await page.keyboard.press('Alt+1');
-  await expect(page.getByRole('heading', { name: 'Learning resources', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Resources', exact: true })).toHaveAttribute('aria-current', 'page');
   await page.keyboard.press('Alt+j');
   await expect(pages).toBeVisible();
   await expect(input).toHaveValue('');
@@ -195,12 +197,99 @@ test('related and independent practice can be browsed and linked work opens safe
   await expect(page.locator('tbody')).toContainText('Explaining a matrix');
   await page.getByRole('button', { name: 'Clear resource filter' }).click();
   await page.getByRole('button', { name: 'Filters', exact: true }).click();
-  await page.getByRole('combobox', { name: 'Filter by resource' }).selectOption('independent');
+  await chooseOption(page, 'Filter by resource', 'Independent practice');
   await expect(page.locator('tbody tr')).toHaveCount(1);
   await page.getByRole('button', { name: 'Details for A recorded explanation' }).click();
   const link = page.getByRole('link', { name: 'Open work', exact: true });
   await expect(link).toHaveAttribute('href', 'https://example.com/my-video');
   await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+});
+
+test('Help appears beneath View source and opens the current collection guide without a visible page title', async ({ page }) => {
+  await useFixture(page);
+  const help = page.getByRole('button', { name: 'Help', exact: true });
+  const source = (await page.getByRole('link', { name: 'View source', exact: true }).boundingBox())!;
+  const button = (await help.boundingBox())!;
+  expect(button.y).toBeGreaterThan(source.y + source.height);
+  expect(Math.abs(button.x + button.width - source.x - source.width)).toBeLessThan(8);
+  for (const [path, title] of [['resources', 'About learning resources'], ['practice', 'About practice']]) {
+    await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: path === 'resources' ? 'Resources' : /^Practice/ }).click();
+    await expect.poll(() => page.locator('main h1').evaluate(heading => {
+      const bounds = heading.getBoundingClientRect(); return bounds.width <= 1 && bounds.height <= 1;
+    })).toBe(true);
+    await help.click();
+    await expect(page.getByRole('dialog', { name: title, exact: true })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(help).toBeFocused();
+  }
+});
+
+test('styled dropdowns search, select by keyboard, and restore unmatched input on dismissal', async ({ page }) => {
+  await useFixture(page);
+  await page.getByRole('button', { name: 'Filters', exact: true }).click();
+  const format = page.getByRole('combobox', { name: 'Filter by format', exact: true });
+  const list = page.getByRole('listbox', { name: 'Filter by format', exact: true });
+  await expect(page.locator('select')).toHaveCount(0);
+  await format.click();
+  await expect(list.getByRole('option')).toHaveCount(7);
+  await expect(list.getByRole('option', { name: 'All formats', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await format.fill('  pLaYlIsT  ');
+  await expect(list.getByRole('option')).toHaveText(['Playlist']);
+  await expect(page.getByText('1 option available', { exact: true })).toHaveCount(1);
+  await expect(format).toBeFocused();
+  const optionId = await list.getByRole('option').getAttribute('id');
+  await expect(format).toHaveAttribute('aria-activedescendant', optionId!);
+  await expect(page.locator('tbody tr')).toHaveCount(3);
+  await page.keyboard.press('Enter');
+  await expect(format).toHaveValue('Playlist');
+  await expect(page.locator('input[type="hidden"][name="Filter by format"]')).toHaveValue('Playlist');
+  await expect(page.locator('tbody tr')).toHaveCount(1);
+  await format.click(); await page.keyboard.press('ArrowDown'); await page.keyboard.press('Enter');
+  await expect(format).toHaveValue('Course');
+  await expect(page.locator('tbody')).toContainText('Python basics');
+  for (const key of ['Escape', 'Tab']) {
+    await format.fill('No such format');
+    await expect(list).toContainText('No matching options');
+    await expect(list.getByRole('option')).toHaveCount(0);
+    await format.press(key);
+    await expect(format).toHaveValue('Course');
+    await expect(list).toHaveCount(0);
+  }
+  await format.fill('  bOoK '); await format.press('Tab');
+  await expect(format).toHaveValue('Book');
+  await expect(page.locator('tbody')).toContainText('Clear prose');
+  await format.fill('Another unmatched value');
+  await page.getByRole('searchbox').click();
+  await expect(format).toHaveValue('Book');
+  await expect(page.getByRole('searchbox')).toBeFocused();
+  await expect(list).toHaveCount(0);
+});
+
+test('dropdown lists fit phone viewports in both themes and wrap long resource labels', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 844 });
+  const longTitle = 'A very long learning resource title with a longidentifierthatmustwrapwithinthepopup';
+  await useFixture(page, () => ({ ...fixture, resources: fixture.resources.map(resource => resource.id === 'vectors' ? { ...resource, title: longTitle } : resource) }));
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: /^Practice/ }).click();
+  await page.getByRole('button', { name: 'Filters', exact: true }).click();
+  const field = page.getByRole('combobox', { name: 'Filter by resource', exact: true });
+  const list = page.getByRole('listbox', { name: 'Filter by resource', exact: true });
+  for (const theme of ['dark', 'light']) {
+    if (theme === 'light') await page.getByRole('button', { name: 'Switch to light theme', exact: true }).click();
+    await field.click();
+    await expect(list.getByRole('option', { name: longTitle, exact: true })).toBeVisible();
+    const bounds = (await list.boundingBox())!, input = (await field.boundingBox())!;
+    expect(bounds.x).toBeGreaterThanOrEqual(12);
+    expect(bounds.x + bounds.width).toBeLessThanOrEqual(308);
+    expect(bounds.y).toBeGreaterThanOrEqual(12);
+    expect(bounds.y + bounds.height).toBeLessThanOrEqual(832);
+    expect(Math.abs(bounds.width - input.width)).toBeLessThan(2);
+    expect(await list.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+    await expect(list).toHaveCSS('background-color', theme === 'dark' ? 'rgb(21, 29, 33)' : 'rgb(255, 255, 255)');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+    await page.keyboard.press('Escape');
+    await expect(field).toBeFocused();
+  }
+  await expect(page.locator('select')).toHaveCount(0);
 });
 
 test('phone layout, keyboard focus and transient theme work without persistence', async ({ page }) => {

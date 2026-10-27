@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowUpRight, Github, Info, Library, Moon, NotebookPen, Search, Sun, X } from 'lucide-react';
+import { ArrowUpRight, CircleHelp, Github, Library, Moon, NotebookPen, Search, Sun, X } from 'lucide-react';
 import { practiceFormats, resourceFormats, resourceTiers } from './model';
 import { library, repositoryUrl } from './library';
 import { Select } from './components/ui';
@@ -32,7 +32,6 @@ export default function App() {
   const launcherRef = useRef<HTMLButtonElement>(null);
   const filters = allFilters[page];
   const isResources = page === 'resources';
-  const infoLabel = isResources ? 'About learning resources' : 'About practice';
   const updateFilters = (patch: Partial<Filters>) => {
     setAllFilters(current => ({ ...current, [page]: { ...current[page], ...patch } }));
     setTableViews(current => {
@@ -125,8 +124,11 @@ export default function App() {
       <div className="topbar-utilities"><button ref={launcherRef} type="button" className="search-launcher" title="Open search and commands" aria-label="Open search and commands" aria-keyshortcuts="Control+k Meta+k Control+Space" aria-haspopup="dialog" aria-expanded={modal?.type === 'commands'} onClick={() => setModal({ type: 'commands', mode: 'commands' })}><Search size={15} aria-hidden="true" focusable="false" /></button><button type="button" className="icon-button theme-toggle" aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</button><span className="utility-divider" /><a className="source-button" aria-label="View source" href={repositoryUrl} target="_blank" rel="noopener noreferrer"><Github size={16} /><span>View source</span><ArrowUpRight size={13} /></a></div>
     </header>
     <main id="main-content" tabIndex={-1}>
-      <div className="page-heading"><div><div className="heading-title"><h1>{isResources ? 'Learning resources' : 'Practice'}</h1><button type="button" className="icon-button heading-info" aria-label={infoLabel} title={infoLabel} aria-haspopup="dialog" onClick={() => setModal({ type: 'info' })}><Info size={18} aria-hidden="true" focusable="false" /></button></div></div></div>
-      <div className="collection-tabs" role="group" aria-label={isResources ? 'Resource status filters' : 'Practice status filters'}>{statuses.map(([key, label]) => <button key={key} type="button" aria-pressed={filters.status === key} className={filters.status === key ? 'active' : ''} onClick={() => updateFilters({ status: key })}>{label}<span>{counts[key]}</span></button>)}</div>
+      <h1 className="sr-only">{isResources ? 'Learning resources' : 'Practice'}</h1>
+      <div className="collection-navigation">
+        <div className="collection-tabs" role="group" aria-label={isResources ? 'Resource status filters' : 'Practice status filters'}>{statuses.map(([key, label]) => <button key={key} type="button" aria-pressed={filters.status === key} className={filters.status === key ? 'active' : ''} onClick={() => updateFilters({ status: key })}>{label}<span>{counts[key]}</span></button>)}</div>
+        <button type="button" className="button quiet help-button" aria-haspopup="dialog" aria-expanded={modal?.type === 'info'} onClick={() => setModal({ type: 'info' })}><CircleHelp size={16} aria-hidden="true" focusable="false" />Help</button>
+      </div>
       <CollectionTable<LearningItem> key={page} label={isResources ? 'Resources' : 'Practice'} columns={isResources ? resourceColumns : practiceDefinition} defaults={isResources ? defaultResourceColumns : defaultPracticeColumns} rows={candidates} allRows={collection} model={model} rowLabel={item => item.title} view={tableViews[page]} onViewChange={updateTable} onColumnFilter={updateColumnFilter} onResetFilters={clearFilters} hasFilters={hasFilters}
         onOpen={item => setModal({ type: 'creator' in item ? 'resource' : 'practice', id: item.id })}
         renderCell={(item, column, visible) => renderCollectionCell(item, column, visible, library, viewPractice, id => setModal({ type: 'resource', id }))}
@@ -137,10 +139,10 @@ export default function App() {
         </>}
         quickFilterCount={['subject', 'format', 'tier', 'resource'].filter(key => filters[key as keyof Filters] !== 'all').length}
         quickFilters={showAll => <>
-          {(showAll || filters.subject !== 'all') && <label>Subject<Select label="Filter by subject" value={filters.subject} onChange={subject => updateFilters({ subject })}><option value="all">All subjects</option>{subjectOptions.map(subject => <option key={subject}>{subject}</option>)}</Select></label>}
-          {(showAll || filters.format !== 'all') && <label>Format<Select label="Filter by format" value={filters.format} onChange={format => updateFilters({ format })}><option value="all">All formats</option>{(isResources ? resourceFormats : practiceFormats).map(format => <option key={format}>{format}</option>)}</Select></label>}
-          {isResources && (showAll || filters.tier !== 'all') && <label>Tier<Select label="Filter by tier" value={filters.tier} onChange={tier => updateFilters({ tier })}><option value="all">All tiers</option>{resourceTiers.map(tier => <option key={tier.value} value={tier.value}>Tier {tier.value}</option>)}</Select></label>}
-          {!isResources && library.practice.length > 0 && (showAll || filters.resource !== 'all') && <label>Related resource<Select label="Filter by resource" value={filters.resource} onChange={resource => updateFilters({ resource })} className="resource-filter"><option value="all">All resources</option><option value="independent">Independent practice</option>{library.resources.map(resource => <option value={resource.id} key={resource.id}>{resource.title}</option>)}</Select></label>}
+          {(showAll || filters.subject !== 'all') && <label>Subject<Select label="Filter by subject" mode="list-only" value={filters.subject} onChange={subject => updateFilters({ subject })} options={[{ value: 'all', label: 'All subjects' }, ...subjectOptions.map(value => ({ value, label: value }))]} /></label>}
+          {(showAll || filters.format !== 'all') && <label>Format<Select label="Filter by format" mode="list-only" value={filters.format} onChange={format => updateFilters({ format })} options={[{ value: 'all', label: 'All formats' }, ...(isResources ? resourceFormats : practiceFormats).map(value => ({ value, label: value }))]} /></label>}
+          {isResources && (showAll || filters.tier !== 'all') && <label>Tier<Select label="Filter by tier" mode="list-only" value={filters.tier} onChange={tier => updateFilters({ tier })} options={[{ value: 'all', label: 'All tiers' }, ...resourceTiers.map(tier => ({ value: String(tier.value), label: `Tier ${tier.value}` }))]} /></label>}
+          {!isResources && library.practice.length > 0 && (showAll || filters.resource !== 'all') && <label>Related resource<Select label="Filter by resource" mode="list-only" value={filters.resource} onChange={resource => updateFilters({ resource })} className="resource-filter" options={[{ value: 'all', label: 'All resources' }, { value: 'independent', label: 'Independent practice' }, ...library.resources.map(resource => ({ value: resource.id, label: resource.title }))]} /></label>}
         </>}
         notice={filters.resource !== 'all' && !isResources && <div className="active-filter"><span>Related to <strong>{filters.resource === 'independent' ? 'Independent practice' : resourceById.get(filters.resource)?.title}</strong></span><button type="button" className="icon-button" aria-label="Clear resource filter" onClick={() => updateFilters({ resource: 'all' })}><X size={14} /></button></div>} />
     </main>

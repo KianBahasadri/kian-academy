@@ -25,6 +25,8 @@ Visitors browse published content. Learning data comes exclusively from the comm
 
 Both collections share Grakata-style column controls: show/hide fields, drag headers or use Move left/right, resize columns, sort by multiple columns with adjustable priorities, and apply text, numeric, or include/exclude filters. Hidden-column filters remain visible as removable chips. CSV exports matching rows and the visible columns in their current order. Select a title to open details; arrow keys move between rows. The Columns menu resets the layout, and Reset filters clears searches and filters.
 
+Help below View source explains the current collection and its table controls. Every dropdown uses a styled, searchable list: type to narrow the choices, use arrow keys and Enter to select, or Escape to restore the current selection. Filters accept only listed values.
+
 ## Develop
 
 Requires Node.js 22.18+ and npm.
