@@ -2,7 +2,7 @@ import { ArrowUpRight, NotebookPen } from 'lucide-react';
 import type { Library, Practice, Resource } from './model';
 import { practiceFormats, resourceFormats, safeUrl, sourceHost, wordCount } from './model';
 import type { TableColumn, TableModel } from './table';
-import { FormatIcon, ResourceMark, Status } from './components/ui';
+import { ResourceMark, Status } from './components/ui';
 
 export type LearningItem = Resource | Practice;
 export type CollectionPage = 'resources' | 'practice';
@@ -80,7 +80,7 @@ export function collectionModel(library: Library): TableModel<LearningItem> {
 export function renderCollectionCell(item: LearningItem, column: TableColumn, library: Library, onPractice: (resourceId: string) => void, onResource: (id: string) => void) {
   switch (column.key) {
     case 'title': return <><ResourceMark format={item.format} subject={item.subject} /><span className="item-identity"><span>{item.title}</span>{'content' in item && <small>{wordCount(item.content) ? `${wordCount(item.content).toLocaleString()} words` : item.url ? 'Linked work' : 'Draft'}</small>}</span></>;
-    case 'format': return <span className="format-label"><FormatIcon format={item.format} size={14} />{item.format}</span>;
+    case 'format': return <span className="format-label">{item.format}</span>;
     case 'tier': return 'tier' in item ? <span className="tier-label">{item.tier}</span> : null;
     case 'status': return <Status value={item.status} />;
     case 'progress': return 'progress' in item ? item.status === 'planned' ? <span className="not-started">Not started</span> : <div className={`table-progress ${item.status === 'completed' ? 'complete' : ''}`}><div><Status value={item.status} /><span className="mono">{item.progress}%</span></div><progress aria-label={`${item.title} progress`} value={item.progress} max={100} /></div> : null;

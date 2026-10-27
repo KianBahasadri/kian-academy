@@ -8,7 +8,7 @@ export function createColumnDragPreview(grid: HTMLDivElement, columns: DragColum
   const bounds = grid.getBoundingClientRect();
   const table = grid.querySelector<HTMLTableElement>('table')!;
   const layer = document.createElement('div');
-  layer.className = 'collection-grid column-drag-layer';
+  layer.className = `collection-grid column-drag-layer ${grid.closest('main')?.className ?? ''}`;
   layer.setAttribute('aria-hidden', 'true');
   layer.inert = true;
   const height = Math.min(grid.clientHeight, table.getBoundingClientRect().bottom - bounds.top - grid.clientTop);

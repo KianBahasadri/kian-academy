@@ -7,7 +7,7 @@ Read [README.md](README.md) for setup and [data/README.md](data/README.md) for t
 - Do not add accounts, a backend, browser persistence, or visitor editing controls. UI filters and theme state are transient.
 - Preserve the Grakata-derived visual style and compact controls in `src/styles.css`.
 - Invalid learning data must fail the build. Do not silently replace or drop invalid entries or resource/practice relationships.
-- Run `npm run build`; run `npm test` for changes to interactions or published data handling. Tests use system Chromium or `CHROMIUM_PATH` on port 5175.
+- When validating a batch before pushing, run `npm run build`; run `npm test` for changes to interactions or published data handling. Tests use system Chromium or `CHROMIUM_PATH` on port 5175. Do not run routine builds and tests after every small edit.
 - GitHub Pages deploys through `.github/workflows/deploy.yml` on pushes to `main`. Keep the build fully static and assets compatible with project URL prefixes.
-- Batch related small changes into cohesive commits and push completed, validated batches without waiting for a separate request. Avoid a separate push and GitHub Actions deployment for every minor edit; include small instruction updates in the next batch. Publish through `main`, check the GitHub Actions deployment, and resolve failures before reporting the work deployed.
+- Make requested edits and commit promptly. Accumulate roughly five small commits before running routine validation, pushing, and checking deployment, unless Kian explicitly asks sooner. Batch testing and pushes across tasks; do not run a build, test suite, push, and deployment for every minor change. Include workflow instruction updates with the current edit. Publish through `main`, check the GitHub Actions deployment, and resolve failures before reporting the batch deployed.
 - Development uses port 5174. Grakata in `~/warframe-toolkit` is a reference; do not modify it for this project.
