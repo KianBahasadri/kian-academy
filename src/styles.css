@@ -195,7 +195,10 @@ main:focus { outline: none; }
 .collection-table .resource-mark { background: transparent; border: 0; border-radius: 0; box-shadow: none; }
 .collection-table .resource-mark::after { display: none; }
 .format-label { color: var(--muted); white-space: nowrap; font-size: 13px; }
-.subject-cell { color: var(--muted); white-space: nowrap; }
+.subject-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 8px; margin: 0; padding: 0; list-style: none; color: var(--muted); }
+.subject-list > li { overflow-wrap: anywhere; }
+.subject-list > li + li::before { content: '·'; margin-right: 8px; color: var(--faint); }
+.eyebrow .subject-list { justify-content: flex-start; }
 .tier-label { color: var(--muted); font-size: 12px; white-space: nowrap; }
 .tier-description { color: var(--muted); font-size: 13px; line-height: 1.7; }
 .tier-legend { display: grid; gap: 16px; margin: 16px 0 0; }

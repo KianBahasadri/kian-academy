@@ -1,8 +1,8 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 import { ArrowDown, ArrowDownToLine, ArrowUp, Filter, Search, SlidersHorizontal, X } from 'lucide-react';
-import { createTableView, cycleColumnSort, filterChoices, filterLabel, filterRows, moveColumn, moveColumnSort, setColumnSort, sortRows } from '../table';
-import type { ColumnDropTarget, ColumnFilter, TableColumn, TableModel, TableView } from '../table';
+import { createTableView, cycleColumnSort, filterChoices, filterLabel, filterRows, moveColumn, moveColumnSort, setColumnSort, sortRows, tableValueText } from '../table';
+import type { ColumnDropTarget, ColumnFilter, TableColumn, TableModel, TableValue, TableView } from '../table';
 import { ColumnMenu, ColumnPicker } from './ColumnControls';
 import { useColumnDrag } from './useColumnDrag';
 
@@ -106,7 +106,7 @@ export function CollectionTable<Row extends { id: string }>({ label, columns: av
     const button = rowButtons.current.get(next.id); button?.focus({ preventScroll: true }); button?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   };
   const exportCsv = () => {
-    const cell = (value: unknown) => `"${String(value ?? '').replaceAll('"', '""')}"`;
+    const cell = (value: TableValue) => `"${tableValueText(value).replaceAll('"', '""')}"`;
     const csv = '\uFEFF' + [columns.map(column => column.title), ...sorted.map(item => columns.map(column => model.value(item, column.key)))].map(row => row.map(cell).join(',')).join('\r\n') + '\r\n';
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a'); link.href = url; link.download = `kian-academy-${label.toLowerCase()}.csv`; link.click();

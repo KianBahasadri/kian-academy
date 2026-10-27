@@ -7,14 +7,16 @@
       "creator": "Robert Sapolsky",
       "format": "YouTube playlist",
       "tier": 2,
-      "subject": "Biology",
+      "subjects": [
+        "Biology"
+      ],
       "url": "https://www.youtube.com/playlist?list=PLzxlKUNNLxmEvjCSUAurMReJBZxaLdD1_",
       "description": "",
       "notes": "",
       "status": "planned",
       "progress": 0,
       "createdAt": "2026-10-26T22:54:29.124Z",
-      "updatedAt": "2026-10-27T10:06:17Z"
+      "updatedAt": "2026-10-27T10:09:29Z"
     },
     {
       "id": "feeling-good",
@@ -22,14 +24,16 @@
       "creator": "David D. Burns",
       "format": "Book",
       "tier": 1,
-      "subject": "Psychology",
+      "subjects": [
+        "Psychology"
+      ],
       "url": "https://feelinggood.com/books/",
       "description": "",
       "notes": "",
       "status": "planned",
       "progress": 0,
       "createdAt": "2026-10-26T22:54:29.124Z",
-      "updatedAt": "2026-10-27T01:46:53.927Z",
+      "updatedAt": "2026-10-27T10:09:29Z",
       "publication": {
         "year": 1999,
         "publisher": "HarperCollins",
@@ -46,14 +50,16 @@
       "creator": "Ryan Martin",
       "format": "Book",
       "tier": 1,
-      "subject": "Psychology",
+      "subjects": [
+        "Psychology"
+      ],
       "url": "https://redwheelweiser.com/book/why-we-get-mad-9781786784452/",
       "description": "",
       "notes": "",
       "status": "planned",
       "progress": 0,
       "createdAt": "2026-10-26T22:54:29.124Z",
-      "updatedAt": "2026-10-27T01:46:53.927Z",
+      "updatedAt": "2026-10-27T10:09:29Z",
       "publication": {
         "year": 2021,
         "publisher": "Watkins Publishing",
@@ -69,14 +75,16 @@
       "creator": "Alexey Guzey",
       "format": "Article",
       "tier": 1,
-      "subject": "Psychology",
+      "subjects": [
+        "Psychology"
+      ],
       "url": "https://guzey.com/books/why-we-sleep/",
       "description": "",
       "notes": "",
       "status": "planned",
       "progress": 0,
       "createdAt": "2026-10-26T22:54:29.124Z",
-      "updatedAt": "2026-10-27T01:46:53.927Z",
+      "updatedAt": "2026-10-27T10:09:29Z",
       "publication": {
         "year": 2019,
         "publisher": "Alexey Guzey",
@@ -89,14 +97,16 @@
       "creator": "Andrew Gelman",
       "format": "Article",
       "tier": 1,
-      "subject": "Psychology",
+      "subjects": [
+        "Psychology"
+      ],
       "url": "https://statmodeling.stat.columbia.edu/2022/02/12/alexey-guzey-on-sleep-put-this-guy-on-rogan-and-give-him-a-ted-talk/",
       "description": "",
       "notes": "",
       "status": "planned",
       "progress": 0,
       "createdAt": "2026-10-26T22:54:29.124Z",
-      "updatedAt": "2026-10-27T01:46:53.927Z",
+      "updatedAt": "2026-10-27T10:09:29Z",
       "publication": {
         "year": 2022,
         "publisher": "Statistical Modeling, Causal Inference, and Social Science",
@@ -109,14 +119,16 @@
       "creator": "Bruce E. Wampold and Zac E. Imel",
       "format": "Book",
       "tier": 3,
-      "subject": "Psychology",
+      "subjects": [
+        "Psychology"
+      ],
       "url": "https://www.routledge.com/The-Great-Psychotherapy-Debate-The-Evidence-for-What-Makes-Psychotherapy/Wampold-Imel/p/book/9780805857092",
       "description": "",
       "notes": "",
       "status": "planned",
       "progress": 0,
       "createdAt": "2026-10-26T22:54:29.124Z",
-      "updatedAt": "2026-10-27T01:46:53.927Z",
+      "updatedAt": "2026-10-27T10:09:29Z",
       "publication": {
         "year": 2015,
         "publisher": "Routledge",
@@ -133,14 +145,16 @@
       "creator": "William R. Miller and Stephen Rollnick",
       "format": "Book",
       "tier": 2,
-      "subject": "Psychology",
+      "subjects": [
+        "Psychology"
+      ],
       "url": "https://www.guilford.com/books/Motivational-Interviewing/Miller-Rollnick/9781462552795",
       "description": "",
       "notes": "",
       "status": "planned",
       "progress": 0,
       "createdAt": "2026-10-26T22:54:29.124Z",
-      "updatedAt": "2026-10-27T01:46:53.927Z",
+      "updatedAt": "2026-10-27T10:09:29Z",
       "publication": {
         "year": 2023,
         "publisher": "The Guilford Press",

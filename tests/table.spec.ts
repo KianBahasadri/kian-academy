@@ -6,14 +6,14 @@ import { filterRows, sortRows } from '../src/table';
 import { chooseOption } from './helpers';
 
 const date = '2026-10-26T12:00:00Z';
-const resource = (id: string, title: string, patch: Partial<Resource> = {}): Resource => ({ id, title, creator: 'Ann', format: 'Book', tier: 2, subject: 'Psychology', url: '', description: '', notes: '', status: 'learning', progress: 40, createdAt: date, updatedAt: date, ...patch });
+const resource = (id: string, title: string, patch: Partial<Resource> = {}): Resource => ({ id, title, creator: 'Ann', format: 'Book', tier: 2, subjects: ['Psychology'], url: '', description: '', notes: '', status: 'learning', progress: 40, createdAt: date, updatedAt: date, ...patch });
 const fixture: Library = {
   version: 1,
   resources: [
-    resource('gamma', 'Gamma', { subject: 'Biology', status: 'completed', progress: 100 }),
+    resource('gamma', 'Gamma', { subjects: ['Biology'], status: 'completed', progress: 100 }),
     resource('epsilon', 'Epsilon', { creator: 'Zed' }),
     resource('beta', 'Beta', { creator: 'Zed', format: 'Article', tier: 1, status: 'planned', progress: 0 }),
-    resource('delta', 'Delta', { creator: '', format: 'Course', subject: 'Biology', tier: 3 }),
+    resource('delta', 'Delta', { creator: '', format: 'Course', subjects: ['Biology'], tier: 3 }),
     resource('alpha', 'Alpha', { notes: 'A note with "quotes", and a comma.\nSecond paragraph.' }),
   ],
   practice: [
@@ -40,12 +40,12 @@ test('columns can be shown, hidden, reordered, reset, and kept separate for each
   const picker = page.getByRole('group', { name: 'Table columns', exact: true });
   await expect(picker.getByRole('checkbox', { name: 'Resource', exact: true })).toBeDisabled();
   await picker.getByRole('checkbox', { name: 'Creator', exact: true }).check();
-  await picker.getByRole('checkbox', { name: 'Subject', exact: true }).uncheck();
+  await picker.getByRole('checkbox', { name: 'Subjects', exact: true }).uncheck();
   await expect(picker).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('button', { name: 'Columns', exact: true })).toBeFocused();
   await expect(page.getByRole('button', { name: 'Sort by Creator', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Sort by Subject', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Sort by Subjects', exact: true })).toHaveCount(0);
   const menu = await options(page, 'Creator');
   await menu.getByRole('menuitem', { name: 'Move right', exact: true }).click();
   await expect.poll(() => columnKeys(page)).toEqual(['title', 'format', 'creator', 'tier', 'progress', 'practice']);
@@ -57,7 +57,7 @@ test('columns can be shown, hidden, reordered, reset, and kept separate for each
   await page.getByRole('button', { name: 'Columns', exact: true }).click();
   await picker.getByRole('button', { name: 'Reset to default', exact: true }).click();
   await page.keyboard.press('Escape');
-  expect(await columnKeys(page)).toEqual(['title', 'format', 'subject', 'tier', 'progress', 'practice']);
+  expect(await columnKeys(page)).toEqual(['title', 'format', 'subjects', 'tier', 'progress', 'practice']);
 });
 
 test('sorts cycle, combine by priority, reorder priorities, and restore original row order', async ({ page }) => {
@@ -131,6 +131,39 @@ test('column filters combine across fields and numeric filters respect validity 
   await page.getByRole('button', { name: 'Reset filters', exact: true }).click();
   await expect(grid(page).locator('tbody tr')).toHaveCount(5);
   await expect(page.getByRole('group', { name: 'Column filters', exact: true })).toHaveCount(0);
+});
+
+test('resource subject lists display, search, filter by each subject, and export together', async ({ page }) => {
+  const library = structuredClone(fixture);
+  library.resources[0].subjects = ['Biology', 'Neuroscience'];
+  library.resources[1].subjects = ['Psychology', 'Neuroscience'];
+  await load(page, library);
+  await expect(grid(page).locator('tbody tr').first().getByRole('list', { name: 'Subjects', exact: true }).getByRole('listitem')).toHaveText(['Biology', 'Neuroscience']);
+  await page.getByRole('button', { name: 'Details for Gamma', exact: true }).click();
+  await expect(page.getByRole('dialog').getByRole('list', { name: 'Subjects', exact: true }).getByRole('listitem')).toHaveText(['Biology', 'Neuroscience']);
+  await page.keyboard.press('Escape');
+  await page.getByRole('searchbox').fill('Neuroscience');
+  expect(await rowNames(page)).toEqual(['Gamma', 'Epsilon']);
+  await page.getByRole('searchbox').fill('');
+  await page.getByRole('button', { name: 'Filters', exact: true }).click();
+  await chooseOption(page, 'Filter by subjects', 'Neuroscience');
+  expect(await rowNames(page)).toEqual(['Gamma', 'Epsilon']);
+  const menu = await options(page, 'Subjects');
+  await expect(menu.getByRole('checkbox', { name: 'Include Biology, Neuroscience', exact: true })).toHaveCount(0);
+  await menu.getByRole('checkbox', { name: 'Include Psychology', exact: true }).check();
+  await expect(page.getByRole('combobox', { name: 'Filter by subjects', exact: true })).toHaveValue('All subjects');
+  expect(await rowNames(page)).toEqual(['Epsilon', 'Beta', 'Alpha']);
+  await menu.getByRole('checkbox', { name: 'Exclude Neuroscience', exact: true }).check();
+  expect(await rowNames(page)).toEqual(['Beta', 'Alpha']);
+  await page.keyboard.press('Escape');
+  await chooseOption(page, 'Filter by subjects', 'Neuroscience');
+  await expect(page.getByRole('button', { name: 'Remove Subjects filter', exact: true })).toHaveCount(0);
+  expect(await rowNames(page)).toEqual(['Gamma', 'Epsilon']);
+  const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Export CSV', exact: true }).click()]);
+  const csv = await readFile((await download.path())!, 'utf8');
+  expect(csv).toContain('"Subjects"');
+  expect(csv).toContain('"Biology, Neuroscience"');
+  expect(csv).toContain('"Psychology, Neuroscience"');
 });
 
 test('numeric condition dropdowns work inside column menus and Escape dismisses one layer at a time', async ({ page }) => {
@@ -229,7 +262,7 @@ test('dragging headers moves a column and Escape cancels a later drag', async ({
   const from = (await format.boundingBox())!, target = (await tier.boundingBox())!;
   await page.mouse.move(from.x + 24, from.y + from.height / 2); await page.mouse.down();
   await page.mouse.move(target.x + target.width / 2, target.y + target.height / 2, { steps: 14 }); await page.mouse.up();
-  await expect.poll(() => columnKeys(page)).toEqual(['title', 'subject', 'tier', 'format', 'progress', 'practice']);
+  await expect.poll(() => columnKeys(page)).toEqual(['title', 'subjects', 'tier', 'format', 'progress', 'practice']);
   await expect(page.locator('.column-drag-layer')).toHaveCount(0);
   const moved = (await format.boundingBox())!;
   await page.mouse.move(moved.x + 24, moved.y + moved.height / 2); await page.mouse.down();
@@ -237,7 +270,7 @@ test('dragging headers moves a column and Escape cancels a later drag', async ({
   await expect(page.locator('.column-drag-layer')).toHaveCount(1);
   await page.keyboard.press('Escape'); await page.mouse.up();
   await expect(page.locator('.column-drag-layer')).toHaveCount(0);
-  expect(await columnKeys(page)).toEqual(['title', 'subject', 'tier', 'format', 'progress', 'practice']);
+  expect(await columnKeys(page)).toEqual(['title', 'subjects', 'tier', 'format', 'progress', 'practice']);
 });
 
 test('keyboard row selection survives sorting and details restore focus to the same resource', async ({ page }) => {
@@ -270,7 +303,7 @@ test('column preferences and filters reset on reload without browser storage', a
   await expect(grid(page).locator('tbody tr')).toHaveCount(3);
   await page.reload();
   await expect(grid(page).locator('tbody tr')).toHaveCount(5);
-  expect(await columnKeys(page)).toEqual(['title', 'format', 'subject', 'tier', 'progress', 'practice']);
+  expect(await columnKeys(page)).toEqual(['title', 'format', 'subjects', 'tier', 'progress', 'practice']);
   expect(errors).toEqual([]);
 });
 
@@ -281,7 +314,7 @@ test('CSV exports matching rows and visible column order with correct quoting', 
   await page.getByRole('button', { name: 'Columns', exact: true }).click();
   const picker = page.getByRole('group', { name: 'Table columns', exact: true });
   await picker.getByRole('checkbox', { name: 'Notes', exact: true }).check();
-  await picker.getByRole('checkbox', { name: 'Subject', exact: true }).uncheck();
+  await picker.getByRole('checkbox', { name: 'Subjects', exact: true }).uncheck();
   await page.keyboard.press('Escape');
   await (await options(page, 'Format')).getByRole('menuitem', { name: 'Move left', exact: true }).click();
   const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Export CSV', exact: true }).click()]);
@@ -328,7 +361,7 @@ test('quick filters collapse while keeping active fields reachable and reset res
   await filters.click();
   await expect(page.getByRole('group', { name: 'Active resources filters', exact: true })).toBeVisible();
   await expect(page.getByRole('combobox', { name: 'Filter by format', exact: true })).toHaveValue('Book');
-  await expect(page.getByRole('combobox', { name: 'Filter by subject', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('combobox', { name: 'Filter by subjects', exact: true })).toHaveCount(0);
   await chooseOption(page, 'Filter by format', 'All formats');
   await expect(filters).toBeFocused();
   await expect(grid(page).locator('tbody tr')).toHaveCount(5);

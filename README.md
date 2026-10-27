@@ -16,7 +16,7 @@ git push
 
 GitHub Actions validates the data, builds and tests the site, and deploys `dist/` to GitHub Pages. Refresh the live page after the deployment completes to see the update. No deployment secrets are required.
 
-- **Resources** are books, textbooks, courses, playlists, articles, and other material. Each has a tier from 1 to 5, describing its intended audience and assumed knowledge. Update `status`, `progress`, and `notes` as you learn.
+- **Resources** are books, textbooks, courses, playlists, articles, and other material. Each has a list of `subjects` and a tier from 1 to 5, describing its intended audience and assumed knowledge. Update `status`, `progress`, and `notes` as you learn.
 - **Practice** is your own work: essays, videos, projects, and notes. Put writing in `content` or link published work in `url`. Set `resourceId` to a resource's `id`, or `null` for independent work.
 
 See [the data guide](data/README.md) for complete examples. The seven resources were restored from `js/curriculum.js` in commit `7642e74`, preserving their IDs, titles, authors, links, and tiers. Book panels show edition-specific publication records with ISBNs and source links. The historical catalog contained no saved learning progress or authored practice, so resources are marked **To learn** and practice is empty. Creation timestamps record when resources were restored into the published library; update timestamps record subsequent edits.

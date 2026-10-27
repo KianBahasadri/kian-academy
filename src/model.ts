@@ -30,7 +30,7 @@ export interface Resource {
   creator: string;
   format: ResourceFormat;
   tier: ResourceTier;
-  subject: string;
+  subjects: string[];
   url: string;
   description: string;
   notes: string;
@@ -90,6 +90,7 @@ export function parseLibrary(raw: string): Library {
   const strings = (value: Record<string, unknown>, keys: string[]) => keys.every(key => typeof value[key] === 'string');
   const dates = (value: Record<string, unknown>) => ['createdAt', 'updatedAt'].every(key => typeof value[key] === 'string' && Number.isFinite(Date.parse(value[key] as string)));
   const link = (value: unknown) => typeof value === 'string' && (value === '' || Boolean(safeUrl(value)));
+  const subjects = (value: unknown) => Array.isArray(value) && value.length > 0 && value.every(subject => typeof subject === 'string' && subject.trim().length > 0) && new Set(value).size === value.length;
   const publication = (value: unknown, book: boolean) => {
     if (value === undefined) return true;
     if (!object(value)) return false;
@@ -101,7 +102,7 @@ export function parseLibrary(raw: string): Library {
       typeof value.sourceUrl === 'string' && Boolean(safeUrl(value.sourceUrl));
   };
   if (!object(data) || data.version !== 1 || !Array.isArray(data.resources) || !Array.isArray(data.practice)) throw new Error('Unsupported library');
-  if (!data.resources.every(r => object(r) && strings(r, ['id', 'title', 'creator', 'subject', 'description', 'notes']) && r.id && r.title && dates(r) && resourceFormats.includes(r.format as ResourceFormat) && resourceTiers.some(tier => tier.value === r.tier) && ['planned', 'learning', 'completed'].includes(r.status as string) && typeof r.progress === 'number' && Number.isInteger(r.progress) && r.progress >= 0 && r.progress <= 100 && (r.status !== 'completed' || r.progress === 100) && (r.status !== 'planned' || r.progress === 0) && (r.status !== 'learning' || r.progress < 100) && link(r.url))) throw new Error('Invalid resources');
+  if (!data.resources.every(r => object(r) && strings(r, ['id', 'title', 'creator', 'description', 'notes']) && subjects(r.subjects) && r.id && r.title && dates(r) && resourceFormats.includes(r.format as ResourceFormat) && resourceTiers.some(tier => tier.value === r.tier) && ['planned', 'learning', 'completed'].includes(r.status as string) && typeof r.progress === 'number' && Number.isInteger(r.progress) && r.progress >= 0 && r.progress <= 100 && (r.status !== 'completed' || r.progress === 100) && (r.status !== 'planned' || r.progress === 0) && (r.status !== 'learning' || r.progress < 100) && link(r.url))) throw new Error('Invalid resources');
   if (!data.resources.every(r => publication(r.publication, r.format === 'Book' || r.format === 'Textbook'))) throw new Error('Invalid resource publication metadata');
   const ids = new Set(data.resources.map(r => r.id));
   if (ids.size !== data.resources.length) throw new Error('Duplicate resources');

@@ -20,9 +20,13 @@ export function FormatIcon({ format, size = 18 }: { format: string; size?: numbe
   return <Icon size={size} strokeWidth={1.6} aria-hidden="true" />;
 }
 
-export function ResourceMark({ format, subject, large = false }: { format: string; subject: string; large?: boolean }) {
-  const tone = subject === 'Mathematics' ? 'blue' : subject === 'Computer science' ? 'purple' : subject === 'Writing' ? 'sand' : subject === 'Biology' ? 'green' : 'neutral';
+export function ResourceMark({ format, subjects, large = false }: { format: string; subjects: string[]; large?: boolean }) {
+  const tone = subjects.includes('Mathematics') ? 'blue' : subjects.includes('Computer science') ? 'purple' : subjects.includes('Writing') ? 'sand' : subjects.includes('Biology') ? 'green' : 'neutral';
   return <span className={`resource-mark ${tone}${large ? ' large' : ''}`}><FormatIcon format={format} size={large ? 27 : 21} /></span>;
+}
+
+export function Subjects({ values }: { values: string[] }) {
+  return <ul className="subject-list" aria-label="Subjects">{values.map(value => <li key={value}>{value}</li>)}</ul>;
 }
 
 export function Status({ value }: { value: string }) {

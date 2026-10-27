@@ -2,7 +2,7 @@ import { ArrowUpRight, NotebookPen } from 'lucide-react';
 import type { Library, Practice, Resource } from './model';
 import { practiceFormats, resourceFormats, safeUrl, sourceHost, wordCount } from './model';
 import type { TableColumn, TableModel } from './table';
-import { ResourceMark, Status } from './components/ui';
+import { ResourceMark, Status, Subjects } from './components/ui';
 
 export type LearningItem = Resource | Practice;
 export type CollectionPage = 'resources' | 'practice';
@@ -17,7 +17,7 @@ export const resourceColumns: TableColumn[] = [
   { key: 'title', title: 'Resource', required: true, width: 340, minWidth: 220 },
   { key: 'creator', title: 'Creator', wrap: true, width: 200 },
   { key: 'format', title: 'Format', choices: resourceFormats.map(value => ({ value, label: value })), width: 130 },
-  { key: 'subject', title: 'Subject', choices: 'values', width: 150 },
+  { key: 'subjects', title: 'Subjects', choices: 'values', wrap: true, width: 180 },
   { key: 'tier', title: 'Tier', kind: 'number', number: { min: 1, max: 5 }, width: 110 },
   { key: 'progress', title: 'Progress', kind: 'number', number: { min: 0, max: 100 }, minWidth: 156, width: 180 },
   { key: 'status', title: 'Status', choices: ['planned', 'learning', 'completed'].map(value => ({ value, label: statusLabels[value] })), width: 150 },
@@ -36,7 +36,7 @@ export const practiceColumns: TableColumn[] = [
   { key: 'content', title: 'Writing', wrap: true, width: 300 },
   ...dates, website,
 ];
-export const defaultResourceColumns = ['title', 'format', 'subject', 'tier', 'progress', 'practice'];
+export const defaultResourceColumns = ['title', 'format', 'subjects', 'tier', 'progress', 'practice'];
 export const defaultPracticeColumns = ['title', 'format', 'subject', 'status', 'resource', 'updatedAt'];
 
 export function collectionModel(library: Library): TableModel<LearningItem> {
@@ -49,7 +49,8 @@ export function collectionModel(library: Library): TableModel<LearningItem> {
         case 'title': return item.title;
         case 'creator': return 'creator' in item ? item.creator || null : null;
         case 'format': return item.format;
-        case 'subject': return item.subject;
+        case 'subjects': return 'subjects' in item ? item.subjects : null;
+        case 'subject': return 'subject' in item ? item.subject : null;
         case 'tier': return 'tier' in item ? item.tier : null;
         case 'progress': return 'progress' in item ? item.progress : null;
         case 'status': return item.status;
@@ -79,8 +80,9 @@ export function collectionModel(library: Library): TableModel<LearningItem> {
 
 export function renderCollectionCell(item: LearningItem, column: TableColumn, library: Library, onPractice: (resourceId: string) => void, onResource: (id: string) => void) {
   switch (column.key) {
-    case 'title': return <><ResourceMark format={item.format} subject={item.subject} /><span className="item-identity"><span>{item.title}</span>{'content' in item && <small>{wordCount(item.content) ? `${wordCount(item.content).toLocaleString()} words` : item.url ? 'Linked work' : 'Draft'}</small>}</span></>;
+    case 'title': return <><ResourceMark format={item.format} subjects={'subjects' in item ? item.subjects : [item.subject]} /><span className="item-identity"><span>{item.title}</span>{'content' in item && <small>{wordCount(item.content) ? `${wordCount(item.content).toLocaleString()} words` : item.url ? 'Linked work' : 'Draft'}</small>}</span></>;
     case 'format': return <span className="format-label">{item.format}</span>;
+    case 'subjects': return 'subjects' in item ? <Subjects values={item.subjects} /> : null;
     case 'tier': return 'tier' in item ? <span className="tier-label">{item.tier}</span> : null;
     case 'status': return <Status value={item.status} />;
     case 'progress': return 'progress' in item ? item.status === 'planned' ? <span className="not-started">Not started</span> : <div className={`table-progress ${item.status === 'completed' ? 'complete' : ''}`}><div><Status value={item.status} /><span className="mono">{item.progress}%</span></div><progress aria-label={`${item.title} progress`} value={item.progress} max={100} /></div> : null;

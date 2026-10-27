@@ -1,5 +1,5 @@
 export type ColumnKey = string;
-export type TableValue = string | number | boolean | null;
+export type TableValue = string | string[] | number | boolean | null;
 export type FilterChoice = { value: string; label: string };
 export type TableColumn = {
   key: ColumnKey; title: string; kind?: 'boolean' | 'number'; required?: boolean; wrap?: boolean;
@@ -18,6 +18,10 @@ export type ColumnFilters = Partial<Record<ColumnKey, ColumnFilter>>;
 export type ColumnPreferences = { order: ColumnKey[]; visible: ColumnKey[] };
 export type ColumnDropTarget = { key: ColumnKey; edge: 'before' | 'after' };
 
+export function tableValueText(value: TableValue): string {
+  return Array.isArray(value) ? value.join(', ') : String(value ?? '');
+}
+
 export function moveColumn(order: ColumnKey[], key: ColumnKey, target: ColumnDropTarget): ColumnKey[] {
   if (key === target.key || !order.includes(key) || !order.includes(target.key)) return order;
   const next = order.filter(column => column !== key);
@@ -34,7 +38,7 @@ export function sortRows<Row>(items: Row[], sorting: ColumnSort[], model: TableM
         continue;
       }
       const result = model.compare?.(a, b, sort.key) ?? (((typeof av === 'boolean' && typeof bv === 'boolean') || (typeof av === 'number' && typeof bv === 'number'))
-        ? Number(av) - Number(bv) : String(av).localeCompare(String(bv), undefined, { sensitivity: 'base', numeric: true }));
+        ? Number(av) - Number(bv) : tableValueText(av).localeCompare(tableValueText(bv), undefined, { sensitivity: 'base', numeric: true }));
       if (result) return result * sort.direction;
     }
     return 0;
@@ -45,9 +49,9 @@ export function filterRows<Row>(items: Row[], filters: ColumnFilters, model: Tab
   return items.filter(item => Object.entries(filters).every(([key, filter]) => {
     if (!filter) return true;
     const value = model.value(item, key);
-    if (filter.kind === 'text') return String(value ?? '').toLocaleLowerCase().includes(filter.value.trim().toLocaleLowerCase());
+    if (filter.kind === 'text') return tableValueText(value).toLocaleLowerCase().includes(filter.value.trim().toLocaleLowerCase());
     if (filter.kind === 'choice') {
-      const matches = (choice: string) => model.matchesChoice?.(item, key, choice) ?? String(value) === choice;
+      const matches = (choice: string) => model.matchesChoice?.(item, key, choice) ?? (Array.isArray(value) ? value.includes(choice) : String(value) === choice);
       return (!filter.values.length || filter.values.some(matches)) && !filter.excludedValues?.some(matches);
     }
     if (filter.operator === 'unknown') return value === null;
@@ -82,7 +86,10 @@ export function filterLabel(filter: ColumnFilter, choices?: FilterChoice[]): str
 export function filterChoices<Row>(column: TableColumn, items: Row[], model: TableModel<Row>): FilterChoice[] | undefined {
   if (Array.isArray(column.choices)) return column.choices;
   if (column.kind === 'boolean') return [{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }];
-  if (column.choices === 'values') return [...new Set(items.map(item => String(model.value(item, column.key))))].sort().map(value => ({ value, label: value }));
+  if (column.choices === 'values') return [...new Set(items.flatMap(item => {
+    const value = model.value(item, column.key);
+    return Array.isArray(value) ? value : [String(value)];
+  }))].sort().map(value => ({ value, label: value }));
   return undefined;
 }
 

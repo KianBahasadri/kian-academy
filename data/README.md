@@ -13,7 +13,7 @@ Keep `version` at `1`. Both `resources` and `practice` are arrays. IDs must be u
   "creator": "Its author or creator",
   "format": "Book",
   "tier": 2,
-  "subject": "Mathematics",
+  "subjects": ["Mathematics", "Physics"],
   "url": "https://example.com/book",
   "description": "What this resource covers.",
   "notes": "What I learned, understood, or still want to explore.",
@@ -36,7 +36,7 @@ Formats: `YouTube playlist`, `Course`, `Book`, `Textbook`, `Article`, `Other`.
 | 4 | Assumes substantial knowledge of the subject and its methods. |
 | 5 | Written for specialists in a narrow area, beyond general expertise in the wider discipline. |
 
-Statuses: `planned` requires progress `0`; `learning` accepts integer progress `0`–`99`; `completed` requires `100`. The site displays these as To learn, In progress, and Completed. Subject is free text. Creator, URL, description, and notes can be empty strings. Use an HTTP(S) URL when present.
+Statuses: `planned` requires progress `0`; `learning` accepts integer progress `0`–`99`; `completed` requires `100`. The site displays these as To learn, In progress, and Completed. `subjects` is a nonempty list of unique, nonblank strings. Use as many subjects as the resource covers; filters match individual subjects, and CSV exports the list in one cell. Creator, URL, description, and notes can be empty strings. Use an HTTP(S) URL when present.
 
 Resource panels use optional `publication` metadata:
 

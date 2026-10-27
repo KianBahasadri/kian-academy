@@ -7,7 +7,7 @@ export function CollectionInfo({ collection, onClose }: { collection: 'resources
     <div className="dialog-body collection-info">
       {isResources ? <>
         <h3>Browsing</h3>
-        <p>Search or filter by status, subject, format, and tier. Select a resource to read its description and notes, see related practice, or open the original material.</p>
+        <p>Search or filter by status, subjects, format, and tier. A resource can cover several subjects; filtering matches any subject in its list. Select a resource to read its description and notes, see related practice, or open the original material.</p>
         <h3>Learning progress</h3>
         <p>To learn means not started, In progress shows ongoing learning, and Completed means finished. Progress and notes reflect Kian’s published updates.</p>
         <h3>Resource tiers</h3>

@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import type { Library } from '../src/model';
+import { parseLibrary } from '../src/model';
 import { chooseOption } from './helpers';
 
 const published = JSON.parse(readFileSync('data/library.json', 'utf8')) as Library;
@@ -14,9 +15,9 @@ const date = '2026-10-26T12:00:00Z';
 const fixture: Library = {
   version: 1,
   resources: [
-    { id: 'vectors', title: 'Vectors and transformations', creator: 'Test author', format: 'YouTube playlist', tier: 3, subject: 'Mathematics', url: 'https://example.com/vectors', description: 'A visual introduction.', notes: 'Linear transformations preserve addition and scaling.', status: 'completed', progress: 100, createdAt: date, updatedAt: date },
-    { id: 'python', title: 'Python basics', creator: 'Test teacher', format: 'Course', tier: 2, subject: 'Computer science', url: 'https://example.com/python', description: '', notes: 'Functions and small programs.', status: 'learning', progress: 40, createdAt: date, updatedAt: date },
-    { id: 'writing', title: 'Clear prose', creator: 'Test writer', format: 'Book', tier: 1, subject: 'Writing', url: '', description: '', notes: '', status: 'planned', progress: 0, createdAt: date, updatedAt: date },
+    { id: 'vectors', title: 'Vectors and transformations', creator: 'Test author', format: 'YouTube playlist', tier: 3, subjects: ['Mathematics'], url: 'https://example.com/vectors', description: 'A visual introduction.', notes: 'Linear transformations preserve addition and scaling.', status: 'completed', progress: 100, createdAt: date, updatedAt: date },
+    { id: 'python', title: 'Python basics', creator: 'Test teacher', format: 'Course', tier: 2, subjects: ['Computer science'], url: 'https://example.com/python', description: '', notes: 'Functions and small programs.', status: 'learning', progress: 40, createdAt: date, updatedAt: date },
+    { id: 'writing', title: 'Clear prose', creator: 'Test writer', format: 'Book', tier: 1, subjects: ['Writing'], url: '', description: '', notes: '', status: 'planned', progress: 0, createdAt: date, updatedAt: date },
   ],
   practice: [
     { id: 'essay', title: 'Explaining a matrix', format: 'Essay', subject: 'Mathematics', resourceId: 'vectors', url: '', content: 'A matrix describes a transformation.\n\nThe basis vectors show what it does.', status: 'finished', createdAt: date, updatedAt: date },
@@ -50,7 +51,7 @@ test('loads committed data without browser storage or account/API requests', asy
 test('search, combined filters, sorting and status tabs find published resources', async ({ page }) => {
   await useFixture(page);
   await page.getByRole('button', { name: 'Filters', exact: true }).click();
-  await chooseOption(page, 'Filter by subject', 'Mathematics');
+  await chooseOption(page, 'Filter by subjects', 'Mathematics');
   await chooseOption(page, 'Filter by format', 'YouTube playlist');
   await page.getByRole('searchbox').fill('scaling');
   await expect(page.locator('tbody tr')).toHaveCount(1);
@@ -353,4 +354,14 @@ test('publication validation requires an integer resource tier from 1 to 5', asy
     }
     expect(await readFile('data/library.json', 'utf8')).toBe(before);
   } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test('resources require subject lists and reject invalid lists instead of silently replacing them', () => {
+  const data = structuredClone(fixture);
+  data.resources[0].subjects = ['Mathematics', 'Physics'];
+  expect(parseLibrary(JSON.stringify(data)).resources[0].subjects).toEqual(['Mathematics', 'Physics']);
+  for (const subjects of [undefined, null, 'Mathematics', [], [''], ['  '], ['Mathematics', 1], ['Mathematics', 'Mathematics']]) {
+    const invalid = { ...data, resources: [{ ...data.resources[0], subjects }, ...data.resources.slice(1)] };
+    expect(() => parseLibrary(JSON.stringify(invalid)), `Reject ${JSON.stringify(subjects)}`).toThrow('Invalid resources');
+  }
 });

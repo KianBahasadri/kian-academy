@@ -1,13 +1,13 @@
 import { ArrowUpRight, ChevronRight, ExternalLink, NotebookPen } from 'lucide-react';
 import { safeUrl, sourceHost, wordCount } from '../model';
 import type { Practice, Resource } from '../model';
-import { Dialog, FormatIcon, ResourceMark, Status, Tier } from './ui';
+import { Dialog, FormatIcon, ResourceMark, Status, Subjects, Tier } from './ui';
 
 const fullDate = (value: string) => new Date(value).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
 
 export function ResourceDetails({ resource, practice, onPractice, onClose }: { resource: Resource; practice: Practice[]; onPractice: (id: string) => void; onClose: () => void }) {
   return <Dialog title="Resource details" onClose={onClose} drawer><div className="dialog-body detail-body">
-    <div className="detail-identity"><ResourceMark format={resource.format} subject={resource.subject} large /><span className="eyebrow">{resource.format}<span>·</span>{resource.subject}<span className="tier-tag"><Tier value={resource.tier} /></span></span></div>
+    <div className="detail-identity"><ResourceMark format={resource.format} subjects={resource.subjects} large /><div className="eyebrow">{resource.format}<span>·</span><Subjects values={resource.subjects} /><span className="tier-tag"><Tier value={resource.tier} /></span></div></div>
     <h3 className="detail-title">{resource.title}</h3>{resource.creator && <p className="detail-creator">{resource.creator}</p>}
     {resource.publication && <dl className="resource-bibliography" aria-label="Publication details">
       <dt>Publication year</dt><dd>{resource.publication.year}</dd>
@@ -29,7 +29,7 @@ export function ResourceDetails({ resource, practice, onPractice, onClose }: { r
 
 export function PracticeDetails({ practice, resource, onResource, onClose }: { practice: Practice; resource?: Resource; onResource: () => void; onClose: () => void }) {
   return <Dialog title="Practice details" onClose={onClose} drawer><div className="dialog-body detail-body">
-    <div className="detail-identity"><ResourceMark format={practice.format} subject={practice.subject} large /><span className="eyebrow">{practice.format}<span>·</span>{practice.subject}</span></div>
+    <div className="detail-identity"><ResourceMark format={practice.format} subjects={[practice.subject]} large /><span className="eyebrow">{practice.format}<span>·</span>{practice.subject}</span></div>
     <h3 className="detail-title">{practice.title}</h3><div className="practice-detail-meta"><Status value={practice.status} />{wordCount(practice.content) > 0 && <span>{wordCount(practice.content).toLocaleString()} words</span>}</div>
     {safeUrl(practice.url) && <div className="detail-actions"><a className="button primary" href={safeUrl(practice.url)} target="_blank" rel="noopener noreferrer">Open work<ArrowUpRight size={16} /></a></div>}
     {resource && <section className="detail-section"><div className="detail-section-heading"><h3>Learning resource</h3></div><button type="button" className="resource-link" onClick={onResource}><FormatIcon format={resource.format} /><span>{resource.title}<small>{resource.creator}</small></span><ChevronRight size={16} /></button></section>}

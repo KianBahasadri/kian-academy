@@ -36,7 +36,7 @@ export default function App() {
     setAllFilters(current => ({ ...current, [page]: { ...current[page], ...patch } }));
     setTableViews(current => {
       const columnFilters = { ...current[page].filters };
-      for (const key of Object.keys(patch)) if (key !== 'search') delete columnFilters[key];
+      for (const key of Object.keys(patch)) if (key !== 'search') delete columnFilters[key === 'subject' && isResources ? 'subjects' : key];
       return { ...current, [page]: { ...current[page], filters: columnFilters } };
     });
   };
@@ -51,7 +51,8 @@ export default function App() {
       if (filter) next[key] = filter; else delete next[key];
       return { ...current, [page]: { ...current[page], filters: next } };
     });
-    if (['status', 'subject', 'format', 'tier', 'resource'].includes(key)) setAllFilters(current => ({ ...current, [page]: { ...current[page], [key]: 'all' } }));
+    const quickKey = key === 'subjects' ? 'subject' : key;
+    if (['status', 'subject', 'format', 'tier', 'resource'].includes(quickKey)) setAllFilters(current => ({ ...current, [page]: { ...current[page], [quickKey]: 'all' } }));
   };
 
   useEffect(() => {
@@ -85,14 +86,15 @@ export default function App() {
   }, [modal]);
 
   const collection = isResources ? library.resources : library.practice;
-  const subjectOptions = [...new Set(collection.map(item => item.subject))].sort();
+  const subjectOptions = [...new Set(collection.flatMap(item => 'subjects' in item ? item.subjects : [item.subject]))].sort();
   const counts = Object.fromEntries(['all', 'planned', 'learning', 'completed', 'draft', 'finished'].map(status => [status, status === 'all' ? collection.length : collection.filter(item => item.status === status).length]));
   const resourceById = useMemo(() => new Map(library.resources.map(resource => [resource.id, resource])), []);
   const candidates = collection.filter(item => {
     const related = 'resourceId' in item && item.resourceId ? resourceById.get(item.resourceId)?.title ?? '' : '';
-    const searchable = [item.title, item.subject, item.format, related, 'creator' in item ? item.creator : item.content, 'notes' in item ? item.notes : '', 'description' in item ? item.description : ''].join(' ').toLocaleLowerCase();
+    const subjects = 'subjects' in item ? item.subjects : [item.subject];
+    const searchable = [item.title, ...subjects, item.format, related, 'creator' in item ? item.creator : item.content, 'notes' in item ? item.notes : '', 'description' in item ? item.description : ''].join(' ').toLocaleLowerCase();
     return searchable.includes(filters.search.trim().toLocaleLowerCase()) &&
-      (filters.status === 'all' || item.status === filters.status) && (filters.subject === 'all' || item.subject === filters.subject) &&
+      (filters.status === 'all' || item.status === filters.status) && (filters.subject === 'all' || subjects.includes(filters.subject)) &&
       (filters.format === 'all' || item.format === filters.format) && (!isResources || filters.tier === 'all' || ('tier' in item && item.tier === Number(filters.tier))) &&
       (isResources || filters.resource === 'all' || ('resourceId' in item && (filters.resource === 'independent' ? !item.resourceId : item.resourceId === filters.resource)));
   });
@@ -139,7 +141,7 @@ export default function App() {
         </>}
         quickFilterCount={['subject', 'format', 'tier', 'resource'].filter(key => filters[key as keyof Filters] !== 'all').length}
         quickFilters={showAll => <>
-          {(showAll || filters.subject !== 'all') && <label>Subject<Select label="Filter by subject" mode="list-only" value={filters.subject} onChange={subject => updateFilters({ subject })} options={[{ value: 'all', label: 'All subjects' }, ...subjectOptions.map(value => ({ value, label: value }))]} /></label>}
+          {(showAll || filters.subject !== 'all') && <label>{isResources ? 'Subjects' : 'Subject'}<Select label={isResources ? 'Filter by subjects' : 'Filter by subject'} mode="list-only" value={filters.subject} onChange={subject => updateFilters({ subject })} options={[{ value: 'all', label: 'All subjects' }, ...subjectOptions.map(value => ({ value, label: value }))]} /></label>}
           {(showAll || filters.format !== 'all') && <label>Format<Select label="Filter by format" mode="list-only" value={filters.format} onChange={format => updateFilters({ format })} options={[{ value: 'all', label: 'All formats' }, ...(isResources ? resourceFormats : practiceFormats).map(value => ({ value, label: value }))]} /></label>}
           {isResources && (showAll || filters.tier !== 'all') && <label>Tier<Select label="Filter by tier" mode="list-only" value={filters.tier} onChange={tier => updateFilters({ tier })} options={[{ value: 'all', label: 'All tiers' }, ...resourceTiers.map(tier => ({ value: String(tier.value), label: `Tier ${tier.value}` }))]} /></label>}
           {!isResources && library.practice.length > 0 && (showAll || filters.resource !== 'all') && <label>Related resource<Select label="Filter by resource" mode="list-only" value={filters.resource} onChange={resource => updateFilters({ resource })} className="resource-filter" options={[{ value: 'all', label: 'All resources' }, { value: 'independent', label: 'Independent practice' }, ...library.resources.map(resource => ({ value: resource.id, label: resource.title }))]} /></label>}
