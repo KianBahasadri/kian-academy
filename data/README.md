@@ -36,7 +36,11 @@ Formats: `YouTube playlist`, `Course`, `Book`, `Textbook`, `Article`, `Other`.
 | 4 | Assumes substantial knowledge of the subject and its methods. |
 | 5 | Written for specialists in a narrow area, beyond general expertise in the wider discipline. |
 
-Statuses: `planned` requires progress `0`; `learning` accepts integer progress `0`–`99`; `completed` requires `100`. The site displays these as To learn, In progress, and Completed. `subjects` is a nonempty list of unique, nonblank strings. Use as many subjects as the resource covers; filters match individual subjects, and CSV exports the list in one cell. Creator, URL, description, and notes can be empty strings. Use an HTTP(S) URL when present.
+Statuses: `prerequisites` and `planned` require progress `0`; `learning` accepts integer progress `0`–`99`; `completed` requires `100`. The site displays these as Prerequisites needed, To learn, In progress, and Completed. Use `prerequisites` while the assumed foundations still need to be learned, and `planned` when ready to start. Readiness is recorded explicitly, independently of tier; a higher tier does not automatically block a resource.
+
+The current reading order places *The Great Psychotherapy Debate* and *Motivational Interviewing* behind foundational study. This is a readiness assessment based on [Routledge’s advanced research scope](https://www.routledge.com/the-great-psychotherapy-debate-the-evidence-for-what-makes-psychotherapy/wampold-imel/p/book/9780805857092) and [Guilford’s practitioner, trainee, and graduate audience](https://www.guilford.com/books/Motivational-Interviewing/Miller-Rollnick/9781462552795/audience), not a claim of formally required courses or completed learning.
+
+`subjects` is a nonempty list of unique, nonblank strings. Use as many subjects as the resource covers; filters match individual subjects, and CSV exports the list in one cell. Creator, URL, description, and notes can be empty strings. Use an HTTP(S) URL when present.
 
 Resource panels use optional `publication` metadata:
 

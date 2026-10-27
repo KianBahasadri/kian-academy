@@ -4,6 +4,7 @@ Read [README.md](README.md) for setup and [data/README.md](data/README.md) for t
 
 - This is Kian's public, read-only learning portfolio. Published content comes from `data/library.json`; updates are committed and pushed to GitHub.
 - Keep the two entities distinct: resources are learning material; practice is Kian's own work. Never invent learning progress or authored work.
+- Determine routine resource classifications from the catalog, published prerequisites, and available context; do not ask Kian to classify each resource. Keep prerequisite readiness separate from learning progress and resource tier.
 - Use sourced, edition-specific bibliographic facts in resource panels. Do not add generated descriptions, audience commentary, study prompts, or invented notes to published resources.
 - Show resource tiers as compact metadata tags, without explanatory panel sections.
 - Do not add accounts, a backend, browser persistence, or visitor editing controls. UI filters and theme state are transient.

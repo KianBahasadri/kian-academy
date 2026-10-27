@@ -87,7 +87,7 @@ export default function App() {
 
   const collection = isResources ? library.resources : library.practice;
   const subjectOptions = [...new Set(collection.flatMap(item => 'subjects' in item ? item.subjects : [item.subject]))].sort();
-  const counts = Object.fromEntries(['all', 'planned', 'learning', 'completed', 'draft', 'finished'].map(status => [status, status === 'all' ? collection.length : collection.filter(item => item.status === status).length]));
+  const counts = Object.fromEntries(['all', 'prerequisites', 'planned', 'learning', 'completed', 'draft', 'finished'].map(status => [status, status === 'all' ? collection.length : collection.filter(item => item.status === status).length]));
   const resourceById = useMemo(() => new Map(library.resources.map(resource => [resource.id, resource])), []);
   const candidates = collection.filter(item => {
     const related = 'resourceId' in item && item.resourceId ? resourceById.get(item.resourceId)?.title ?? '' : '';
@@ -101,7 +101,7 @@ export default function App() {
   const hasFilters = filters.search !== '' || filters.status !== 'all' || filters.subject !== 'all' || filters.format !== 'all' || filters.tier !== 'all' || filters.resource !== 'all';
   const selectedResource = modal && 'id' in modal ? resourceById.get(modal.id) : undefined;
   const selectedPractice = modal && 'id' in modal ? library.practice.find(item => item.id === modal.id) : undefined;
-  const statuses = isResources ? [['all', 'All resources'], ['learning', 'In progress'], ['planned', 'To learn'], ['completed', 'Completed']] : [['all', 'All practice'], ['draft', 'Drafts'], ['finished', 'Finished']];
+  const statuses = isResources ? [['all', 'All resources'], ['learning', 'In progress'], ['planned', 'To learn'], ['prerequisites', 'Prerequisites needed'], ['completed', 'Completed']] : [['all', 'All practice'], ['draft', 'Drafts'], ['finished', 'Finished']];
   const commands: Command[] = [
     { label: 'Search this collection', keys: ['/'], run: () => searchRef.current?.focus() },
     { label: 'Toggle theme', keys: ['Alt', 'Shift', 'T'], run: () => setTheme(current => current === 'dark' ? 'light' : 'dark') },

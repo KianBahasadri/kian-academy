@@ -11,7 +11,7 @@ export const resourceTiers = [
 export type ResourceFormat = typeof resourceFormats[number];
 export type ResourceTier = typeof resourceTiers[number]['value'];
 export type PracticeFormat = typeof practiceFormats[number];
-export type ResourceStatus = 'planned' | 'learning' | 'completed';
+export type ResourceStatus = 'prerequisites' | 'planned' | 'learning' | 'completed';
 export type PracticeStatus = 'draft' | 'finished';
 
 export interface ResourcePublication {
@@ -102,7 +102,7 @@ export function parseLibrary(raw: string): Library {
       typeof value.sourceUrl === 'string' && Boolean(safeUrl(value.sourceUrl));
   };
   if (!object(data) || data.version !== 1 || !Array.isArray(data.resources) || !Array.isArray(data.practice)) throw new Error('Unsupported library');
-  if (!data.resources.every(r => object(r) && strings(r, ['id', 'title', 'creator', 'description', 'notes']) && subjects(r.subjects) && r.id && r.title && dates(r) && resourceFormats.includes(r.format as ResourceFormat) && resourceTiers.some(tier => tier.value === r.tier) && ['planned', 'learning', 'completed'].includes(r.status as string) && typeof r.progress === 'number' && Number.isInteger(r.progress) && r.progress >= 0 && r.progress <= 100 && (r.status !== 'completed' || r.progress === 100) && (r.status !== 'planned' || r.progress === 0) && (r.status !== 'learning' || r.progress < 100) && link(r.url))) throw new Error('Invalid resources');
+  if (!data.resources.every(r => object(r) && strings(r, ['id', 'title', 'creator', 'description', 'notes']) && subjects(r.subjects) && r.id && r.title && dates(r) && resourceFormats.includes(r.format as ResourceFormat) && resourceTiers.some(tier => tier.value === r.tier) && ['prerequisites', 'planned', 'learning', 'completed'].includes(r.status as string) && typeof r.progress === 'number' && Number.isInteger(r.progress) && r.progress >= 0 && r.progress <= 100 && (r.status !== 'completed' || r.progress === 100) && (!['prerequisites', 'planned'].includes(r.status as string) || r.progress === 0) && (r.status !== 'learning' || r.progress < 100) && link(r.url))) throw new Error('Invalid resources');
   if (!data.resources.every(r => publication(r.publication, r.format === 'Book' || r.format === 'Textbook'))) throw new Error('Invalid resource publication metadata');
   const ids = new Set(data.resources.map(r => r.id));
   if (ids.size !== data.resources.length) throw new Error('Duplicate resources');

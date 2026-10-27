@@ -9,7 +9,7 @@ export function CollectionInfo({ collection, onClose }: { collection: 'resources
         <h3>Browsing</h3>
         <p>Search or filter by status, subjects, format, and tier. A resource can cover several subjects; filtering matches any subject in its list. Select a resource to read its description and notes, see related practice, or open the original material.</p>
         <h3>Learning progress</h3>
-        <p>To learn means not started, In progress shows ongoing learning, and Completed means finished. Progress and notes reflect Kian’s published updates.</p>
+        <p>Prerequisites needed means building the foundations before starting. To learn means ready to start, In progress shows ongoing learning, and Completed means finished. Progress and notes reflect Kian’s published updates.</p>
         <h3>Resource tiers</h3>
         <p>Tiers describe the intended audience and assumed knowledge, independently of learning progress.</p>
         <dl className="tier-legend">{resourceTiers.map(tier => <div key={tier.value}><dt>Tier {tier.value}</dt><dd>{tier.description}</dd></div>)}</dl>

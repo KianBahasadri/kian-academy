@@ -30,7 +30,7 @@ export function Subjects({ values }: { values: string[] }) {
 }
 
 export function Status({ value }: { value: string }) {
-  const text: Record<string, string> = { planned: 'To learn', learning: 'In progress', completed: 'Completed', draft: 'Draft', finished: 'Finished' };
+  const text: Record<string, string> = { prerequisites: 'Prerequisites needed', planned: 'To learn', learning: 'In progress', completed: 'Completed', draft: 'Draft', finished: 'Finished' };
   return <span className={`status status-${value}`}>{value === 'completed' || value === 'finished' ? <Check size={13} /> : <span className="status-dot" />}{text[value] ?? value}</span>;
 }
 

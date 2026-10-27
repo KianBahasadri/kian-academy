@@ -66,6 +66,33 @@ test('search, combined filters, sorting and status tabs find published resources
   await expect(page.locator('tbody')).toContainText('Vectors and transformations');
 });
 
+test('resources needing prerequisites are separate from resources ready to learn', async ({ page }) => {
+  const data = structuredClone(fixture);
+  data.resources[2].status = 'prerequisites';
+  await useFixture(page, () => data);
+  await page.getByRole('button', { name: 'To learn 0', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'No matches here', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Prerequisites needed 1', exact: true }).click();
+  await expect(page.locator('tbody tr')).toHaveCount(1);
+  await expect(page.locator('tbody')).toContainText('Clear prose');
+  await expect(page.locator('tbody')).toContainText('Prerequisites needed');
+  await expect(page.locator('tbody')).not.toContainText('Not started');
+  await page.getByRole('button', { name: 'Details for Clear prose', exact: true }).click();
+  await expect(page.getByRole('dialog').getByText('Prerequisites needed', { exact: true })).toBeVisible();
+  await expect(page.getByRole('dialog').getByRole('progressbar')).toHaveAttribute('value', '0');
+});
+
+test('prerequisite status requires zero progress and does not apply to practice', () => {
+  const data = structuredClone(fixture);
+  data.resources[2].status = 'prerequisites';
+  expect(parseLibrary(JSON.stringify(data)).resources[2].status).toBe('prerequisites');
+  data.resources[2].progress = 1;
+  expect(() => parseLibrary(JSON.stringify(data))).toThrow('Invalid resources');
+  data.resources[2].progress = 0;
+  const invalidPractice = { ...data, practice: [{ ...data.practice[0], status: 'prerequisites' }] };
+  expect(() => parseLibrary(JSON.stringify(invalidPractice))).toThrow('Invalid practice');
+});
+
 test('resource tiers filter and sort independently of progress and explain the five levels', async ({ page }) => {
   await useFixture(page);
   await page.getByRole('button', { name: 'Filters', exact: true }).click();

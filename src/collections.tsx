@@ -7,7 +7,7 @@ import { ResourceMark, Status, Subjects } from './components/ui';
 export type LearningItem = Resource | Practice;
 export type CollectionPage = 'resources' | 'practice';
 
-const statusLabels: Record<string, string> = { planned: 'To learn', learning: 'In progress', completed: 'Completed', draft: 'Draft', finished: 'Finished' };
+const statusLabels: Record<string, string> = { prerequisites: 'Prerequisites needed', planned: 'To learn', learning: 'In progress', completed: 'Completed', draft: 'Draft', finished: 'Finished' };
 const dates: TableColumn[] = [
   { key: 'updatedAt', title: 'Updated', width: 150, align: 'right' },
   { key: 'createdAt', title: 'Added', width: 150, align: 'right' },
@@ -20,7 +20,7 @@ export const resourceColumns: TableColumn[] = [
   { key: 'subjects', title: 'Subjects', choices: 'values', wrap: true, width: 180 },
   { key: 'tier', title: 'Tier', kind: 'number', number: { min: 1, max: 5 }, width: 110 },
   { key: 'progress', title: 'Progress', kind: 'number', number: { min: 0, max: 100 }, minWidth: 156, width: 180 },
-  { key: 'status', title: 'Status', choices: ['planned', 'learning', 'completed'].map(value => ({ value, label: statusLabels[value] })), width: 150 },
+  { key: 'status', title: 'Status', choices: ['prerequisites', 'planned', 'learning', 'completed'].map(value => ({ value, label: statusLabels[value] })), width: 150 },
   { key: 'practice', title: 'Practice', kind: 'number', number: { min: 0, max: Number.MAX_SAFE_INTEGER }, width: 130 },
   { key: 'notes', title: 'Notes', wrap: true, width: 260 },
   { key: 'description', title: 'Description', wrap: true, width: 300 },
@@ -69,7 +69,7 @@ export function collectionModel(library: Library): TableModel<LearningItem> {
     compare: (a, b, key) => {
       if (key === 'createdAt' || key === 'updatedAt') return Date.parse(a[key]) - Date.parse(b[key]);
       if (key === 'status') {
-        const ranks: Record<string, number> = { planned: 0, learning: 1, completed: 2, draft: 0, finished: 1 };
+        const ranks: Record<string, number> = { prerequisites: -1, planned: 0, learning: 1, completed: 2, draft: 0, finished: 1 };
         return ranks[a.status] - ranks[b.status];
       }
       return undefined;
@@ -85,7 +85,7 @@ export function renderCollectionCell(item: LearningItem, column: TableColumn, li
     case 'subjects': return 'subjects' in item ? <Subjects values={item.subjects} /> : null;
     case 'tier': return 'tier' in item ? <span className="tier-label">{item.tier}</span> : null;
     case 'status': return <Status value={item.status} />;
-    case 'progress': return 'progress' in item ? item.status === 'planned' ? <span className="not-started">Not started</span> : <div className={`table-progress ${item.status === 'completed' ? 'complete' : ''}`}><div><Status value={item.status} /><span className="mono">{item.progress}%</span></div><progress aria-label={`${item.title} progress`} value={item.progress} max={100} /></div> : null;
+    case 'progress': return 'progress' in item ? item.status === 'prerequisites' ? <Status value={item.status} /> : item.status === 'planned' ? <span className="not-started">Not started</span> : <div className={`table-progress ${item.status === 'completed' ? 'complete' : ''}`}><div><Status value={item.status} /><span className="mono">{item.progress}%</span></div><progress aria-label={`${item.title} progress`} value={item.progress} max={100} /></div> : null;
     case 'practice': {
       const count = library.practice.filter(practice => practice.resourceId === item.id).length;
       return count ? <button type="button" className="practice-count has-practice" aria-label={`View practice for ${item.title}`} onClick={() => onPractice(item.id)}><NotebookPen size={14} aria-hidden="true" />{count}</button> : <span className="muted">0</span>;
