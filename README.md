@@ -21,7 +21,9 @@ GitHub Actions validates the data, builds and tests the site, and deploys `dist/
 
 See [the data guide](data/README.md) for complete examples. The seven resources were restored from `js/curriculum.js` in commit `7642e74`, preserving their IDs, titles, authors, links, tiers, and study focuses. The historical catalog contained no saved learning progress or authored practice, so resources are marked **To learn** and practice is empty. Creation timestamps record when resources were restored into the published library; update timestamps record subsequent edits.
 
-Visitors browse published content. Learning data comes exclusively from the committed JSON file. The site has no accounts, backend, browser storage, cookies, or editing controls. Every entry in that file is public. Searches, filters, and theme changes last only for the current page session.
+Visitors browse published content. Learning data comes exclusively from the committed JSON file. The site has no accounts, backend, browser storage, cookies, or editing controls. Every entry in that file is public. Searches, filters, themes, column layouts, widths, and sort priorities last only for the current page session. Resource and practice views keep separate settings.
+
+Both collections share Grakata-style column controls: show/hide fields, drag headers or use Move left/right, resize columns, sort by multiple columns with adjustable priorities, and apply text, numeric, or include/exclude filters. Hidden-column filters remain visible as removable chips. CSV exports matching rows and the visible columns in their current order. Select a title to open details; arrow keys move between rows. The Columns menu resets the layout, and Reset filters clears searches and filters.
 
 ## Develop
 
@@ -44,6 +46,7 @@ Tests use system Chromium at `/usr/bin/chromium`, or `CHROMIUM_PATH`. They run o
 - `src/model.ts`: the data contract and validation.
 - `src/library.ts`: reads the committed data for the build.
 - `src/App.tsx`, `src/components/`: read-only collections and detail panels.
+- `src/table.ts`, `src/collections.tsx`, `src/components/CollectionTable.tsx`: shared column behavior, portfolio field definitions, and table rendering. Column menus, popovers, and animated dragging follow the current [Grakata collection table](https://github.com/KianBahasadri/warframe-toolkit/blob/5f35efbfb9e93950930fa484b1060c8ebd954d7d/src/components/CollectionTable.tsx), adapted to this read-only portfolio without browser persistence.
 - `src/styles.css`: design tokens, both themes, and phone layouts.
 - `scripts/validate-data.mjs`: rejects invalid content before publication.
 - `.github/workflows/deploy.yml`: deployment on pushes to `main`.

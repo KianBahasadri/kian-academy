@@ -1,32 +1,59 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowDownAZ, ArrowUpRight, BookOpen, ChevronRight, Github, Info, Library, Moon, NotebookPen, Search, Sun, X } from 'lucide-react';
-import { practiceFormats, resourceFormats, resourceTiers, safeUrl, wordCount } from './model';
+import { ArrowUpRight, Github, Info, Library, Moon, NotebookPen, Search, Sun, X } from 'lucide-react';
+import { practiceFormats, resourceFormats, resourceTiers } from './model';
 import { library, repositoryUrl } from './library';
-import { FormatIcon, ResourceMark, Select, Status, Tier } from './components/ui';
+import { Select } from './components/ui';
 import { PracticeDetails, ResourceDetails } from './components/Details';
 import { CollectionInfo } from './components/CollectionInfo';
 import { Commands, KeyboardShortcuts } from './components/Commands';
 import type { Command, CommandMode } from './components/Commands';
+import { CollectionTable } from './components/CollectionTable';
+import { collectionModel, defaultPracticeColumns, defaultResourceColumns, practiceColumns, renderCollectionCell, resourceColumns } from './collections';
+import type { CollectionPage, LearningItem } from './collections';
+import { createTableView } from './table';
+import type { ColumnFilter, TableView } from './table';
+import type { TableViewUpdate } from './components/CollectionTable';
 
-type Page = 'resources' | 'practice';
-type Filters = { search: string; status: string; subject: string; format: string; tier: string; resource: string; sort: string };
+type Page = CollectionPage;
+type Filters = { search: string; status: string; subject: string; format: string; tier: string; resource: string };
 type Modal = { type: 'resource' | 'practice'; id: string } | { type: 'info' | 'shortcuts' } | { type: 'commands'; mode: CommandMode } | null;
-const emptyFilters = (): Filters => ({ search: '', status: 'all', subject: 'all', format: 'all', tier: 'all', resource: 'all', sort: 'recent' });
+const emptyFilters = (): Filters => ({ search: '', status: 'all', subject: 'all', format: 'all', tier: 'all', resource: 'all' });
 const currentPage = (): Page => window.location.hash.startsWith('#/practice') ? 'practice' : 'resources';
-const readableDate = (date: string) => new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
 export default function App() {
   const [page, setPage] = useState<Page>(currentPage);
   const [allFilters, setAllFilters] = useState<Record<Page, Filters>>({ resources: emptyFilters(), practice: emptyFilters() });
   const [modal, setModal] = useState<Modal>(null);
   const [theme, setTheme] = useState('dark');
+  const [tableViews, setTableViews] = useState<Record<Page, TableView>>(() => ({ resources: createTableView(resourceColumns, defaultResourceColumns), practice: createTableView(practiceColumns, defaultPracticeColumns) }));
+  const model = useMemo(() => collectionModel(library), []);
+  const practiceDefinition = useMemo(() => practiceColumns.map(column => column.key === 'resource' ? { ...column, choices: [{ value: 'independent', label: 'Independent' }, ...library.resources.map(resource => ({ value: resource.id, label: resource.title }))] } : column), []);
   const searchRef = useRef<HTMLInputElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
   const filters = allFilters[page];
   const isResources = page === 'resources';
   const infoLabel = isResources ? 'About learning resources' : 'About practice';
-  const updateFilters = (patch: Partial<Filters>) => setAllFilters(current => ({ ...current, [page]: { ...current[page], ...patch } }));
-  const clearFilters = () => setAllFilters(current => ({ ...current, [page]: emptyFilters() }));
+  const updateFilters = (patch: Partial<Filters>) => {
+    setAllFilters(current => ({ ...current, [page]: { ...current[page], ...patch } }));
+    setTableViews(current => {
+      const columnFilters = { ...current[page].filters };
+      for (const key of Object.keys(patch)) if (key !== 'search') delete columnFilters[key];
+      return { ...current, [page]: { ...current[page], filters: columnFilters } };
+    });
+  };
+  const clearFilters = () => {
+    setAllFilters(current => ({ ...current, [page]: emptyFilters() }));
+    setTableViews(current => ({ ...current, [page]: { ...current[page], filters: {} } }));
+  };
+  const updateTable = (update: TableViewUpdate) => setTableViews(current => ({ ...current, [page]: update(current[page]) }));
+  const updateColumnFilter = (key: string, filter?: ColumnFilter) => {
+    setTableViews(current => {
+      const next = { ...current[page].filters };
+      if (filter) next[key] = filter; else delete next[key];
+      return { ...current, [page]: { ...current[page], filters: next } };
+    });
+    if (['status', 'subject', 'format', 'tier', 'resource'].includes(key)) setAllFilters(current => ({ ...current, [page]: { ...current[page], [key]: 'all' } }));
+  };
 
   useEffect(() => {
     const sync = () => { setPage(currentPage()); setModal(null); };
@@ -62,19 +89,14 @@ export default function App() {
   const subjectOptions = [...new Set(collection.map(item => item.subject))].sort();
   const counts = Object.fromEntries(['all', 'planned', 'learning', 'completed', 'draft', 'finished'].map(status => [status, status === 'all' ? collection.length : collection.filter(item => item.status === status).length]));
   const resourceById = useMemo(() => new Map(library.resources.map(resource => [resource.id, resource])), []);
-  const practiceCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const item of library.practice) if (item.resourceId) counts.set(item.resourceId, (counts.get(item.resourceId) ?? 0) + 1);
-    return counts;
-  }, []);
-  const visible = collection.filter(item => {
+  const candidates = collection.filter(item => {
     const related = 'resourceId' in item && item.resourceId ? resourceById.get(item.resourceId)?.title ?? '' : '';
     const searchable = [item.title, item.subject, item.format, related, 'creator' in item ? item.creator : item.content, 'notes' in item ? item.notes : '', 'description' in item ? item.description : ''].join(' ').toLocaleLowerCase();
     return searchable.includes(filters.search.trim().toLocaleLowerCase()) &&
       (filters.status === 'all' || item.status === filters.status) && (filters.subject === 'all' || item.subject === filters.subject) &&
       (filters.format === 'all' || item.format === filters.format) && (!isResources || filters.tier === 'all' || ('tier' in item && item.tier === Number(filters.tier))) &&
       (isResources || filters.resource === 'all' || ('resourceId' in item && (filters.resource === 'independent' ? !item.resourceId : item.resourceId === filters.resource)));
-  }).sort((a, b) => filters.sort === 'title' ? a.title.localeCompare(b.title) : filters.sort === 'tier' && 'tier' in a && 'tier' in b ? a.tier - b.tier || a.title.localeCompare(b.title) : filters.sort === 'progress' && 'progress' in a && 'progress' in b ? b.progress - a.progress : b.updatedAt.localeCompare(a.updatedAt));
+  });
   const hasFilters = filters.search !== '' || filters.status !== 'all' || filters.subject !== 'all' || filters.format !== 'all' || filters.tier !== 'all' || filters.resource !== 'all';
   const selectedResource = modal && 'id' in modal ? resourceById.get(modal.id) : undefined;
   const selectedPractice = modal && 'id' in modal ? library.practice.find(item => item.id === modal.id) : undefined;
@@ -91,6 +113,7 @@ export default function App() {
 
   function viewPractice(resourceId: string) {
     setAllFilters(current => ({ ...current, practice: { ...emptyFilters(), resource: resourceId } }));
+    setTableViews(current => ({ ...current, practice: { ...current.practice, filters: {} } }));
     window.location.hash = '/practice'; setPage('practice'); setModal(null);
   }
 
@@ -104,18 +127,22 @@ export default function App() {
     <main id="main-content" tabIndex={-1}>
       <div className="page-heading"><div><div className="heading-title"><h1>{isResources ? 'Learning resources' : 'Practice'}</h1><button type="button" className="icon-button heading-info" aria-label={infoLabel} title={infoLabel} aria-haspopup="dialog" onClick={() => setModal({ type: 'info' })}><Info size={18} aria-hidden="true" focusable="false" /></button></div></div></div>
       <div className="collection-tabs" role="group" aria-label={isResources ? 'Resource status filters' : 'Practice status filters'}>{statuses.map(([key, label]) => <button key={key} type="button" aria-pressed={filters.status === key} className={filters.status === key ? 'active' : ''} onClick={() => updateFilters({ status: key })}>{label}<span>{counts[key]}</span></button>)}</div>
-      <div className="toolbar"><div className="search-field"><Search size={16} /><input ref={searchRef} type="search" aria-label={isResources ? 'Search resources' : 'Search practice'} placeholder={isResources ? 'Search resources…' : 'Search published work…'} value={filters.search} onChange={event => updateFilters({ search: event.target.value })} />{filters.search && <button type="button" className="clear-search" aria-label="Clear search" onClick={() => { updateFilters({ search: '' }); searchRef.current?.focus(); }}><X size={13} /></button>}</div>
-        <Select label="Filter by subject" value={filters.subject} onChange={subject => updateFilters({ subject })}><option value="all">All subjects</option>{subjectOptions.map(subject => <option key={subject}>{subject}</option>)}</Select>
-        <Select label="Filter by format" value={filters.format} onChange={format => updateFilters({ format })}><option value="all">All formats</option>{(isResources ? resourceFormats : practiceFormats).map(format => <option key={format}>{format}</option>)}</Select>
-        {isResources && <Select label="Filter by tier" value={filters.tier} onChange={tier => updateFilters({ tier })} className="tier-filter"><option value="all">All tiers</option>{resourceTiers.map(tier => <option key={tier.value} value={tier.value}>Tier {tier.value}</option>)}</Select>}
-        {!isResources && library.practice.length > 0 && <Select label="Filter by resource" value={filters.resource} onChange={resource => updateFilters({ resource })} className="resource-filter"><option value="all">All resources</option><option value="independent">Independent practice</option>{library.resources.map(resource => <option value={resource.id} key={resource.id}>{resource.title}</option>)}</Select>}
-        {hasFilters && <button type="button" className="button quiet small-button reset-filters" onClick={clearFilters}><X size={13} />Clear</button>}
-        <div className="toolbar-end"><span className="result-count" aria-live="polite">{visible.length} of {collection.length}</span><span className="sort-control"><ArrowDownAZ size={16} /><Select label="Sort collection" value={filters.sort} onChange={sort => updateFilters({ sort })}><option value="recent">Recently updated</option><option value="title">Title, A–Z</option>{isResources && <><option value="tier">Tier, 1–5</option><option value="progress">Progress</option></>}</Select></span></div>
-      </div>
-      {filters.resource !== 'all' && !isResources && <div className="active-filter"><span>Related to <strong>{filters.resource === 'independent' ? 'Independent practice' : resourceById.get(filters.resource)?.title}</strong></span><button type="button" className="icon-button" aria-label="Clear resource filter" onClick={() => updateFilters({ resource: 'all' })}><X size={14} /></button></div>}
-      {visible.length > 0 ? <div className="table-scroll"><table className={`collection-table ${isResources ? 'resources-table' : 'practice-table'}`}><caption className="sr-only">{isResources ? 'Published learning resources. Select a title to read notes and see related work.' : 'Published practice. Select a title to read the work or open its link.'}</caption><thead><tr><th scope="col" className="identity-heading"><button type="button" className="sort-heading" onClick={() => updateFilters({ sort: filters.sort === 'title' ? 'recent' : 'title' })}>{isResources ? 'Resource' : 'Work'}{filters.sort === 'title' && <ArrowDownAZ size={13} />}</button></th><th scope="col">Format</th><th scope="col">Subject</th>{isResources && <th scope="col">Tier</th>}<th scope="col">{isResources ? 'Progress' : 'Status'}</th><th scope="col">{isResources ? 'Practice' : 'Related resource'}</th>{!isResources && <th scope="col">Updated</th>}<th scope="col"><span className="sr-only">Actions</span></th></tr></thead><tbody>{visible.map(item => 'creator' in item ? <tr key={item.id} onClick={event => { if (!(event.target as HTMLElement).closest('a,button')) setModal({ type: 'resource', id: item.id }); }}>
-        <td className="identity-cell"><button type="button" className="item-title" onClick={() => setModal({ type: 'resource', id: item.id })}><ResourceMark format={item.format} subject={item.subject} /><span className="item-identity"><span>{item.title}</span><small>{item.creator || item.subject}</small></span></button></td><td><span className="format-label"><FormatIcon format={item.format} size={14} />{item.format}</span></td><td className="subject-cell">{item.subject}</td><td className="tier-cell"><Tier value={item.tier} /></td><td className="progress-cell">{item.status === 'planned' ? <span className="not-started"><span className="status-dot" />Not started</span> : <div className={`table-progress ${item.status === 'completed' ? 'complete' : ''}`}><div><Status value={item.status} /><span className="mono">{item.progress}%</span></div><progress aria-label={`${item.title} progress`} value={item.progress} max={100} /></div>}</td><td className="resource-practice-cell">{practiceCounts.get(item.id) ? <button type="button" className="practice-count has-practice" aria-label={`View practice for ${item.title}`} onClick={() => viewPractice(item.id)}><NotebookPen size={14} /><span>{practiceCounts.get(item.id)}</span></button> : <span className="muted">—</span>}</td><td className="row-actions">{safeUrl(item.url) && <a className="icon-button row-external" href={safeUrl(item.url)} target="_blank" rel="noopener noreferrer" aria-label={`Open ${item.title} website`} title="Open resource website"><ArrowUpRight size={16} /></a>}<button type="button" className="icon-button" aria-label={`Details for ${item.title}`} onClick={() => setModal({ type: 'resource', id: item.id })}><ChevronRight size={16} /></button></td>
-      </tr> : <tr key={item.id} onClick={event => { if (!(event.target as HTMLElement).closest('a,button')) setModal({ type: 'practice', id: item.id }); }}><td className="identity-cell"><button type="button" className="item-title" onClick={() => setModal({ type: 'practice', id: item.id })}><ResourceMark format={item.format} subject={item.subject} /><span className="item-identity"><span>{item.title}</span><small>{wordCount(item.content) ? `${wordCount(item.content).toLocaleString()} words` : item.url ? 'Linked work' : 'Draft'}</small></span></button></td><td><span className="format-label"><FormatIcon format={item.format} size={14} />{item.format}</span></td><td className="subject-cell">{item.subject}</td><td><Status value={item.status} /></td><td className="related-cell">{item.resourceId ? <button type="button" className="table-resource-link" onClick={() => setModal({ type: 'resource', id: item.resourceId! })}>{resourceById.get(item.resourceId)!.title}</button> : <span className="muted">Independent</span>}</td><td className="date-cell"><time dateTime={item.updatedAt} title={new Date(item.updatedAt).toLocaleString()}>{readableDate(item.updatedAt)}</time></td><td className="row-actions"><button type="button" className="icon-button" aria-label={`Details for ${item.title}`} onClick={() => setModal({ type: 'practice', id: item.id })}><ChevronRight size={16} /></button></td></tr>)}</tbody></table></div> : <div className="empty-state">{hasFilters ? <Search size={31} strokeWidth={1.2} /> : isResources ? <BookOpen size={36} strokeWidth={1.2} /> : <NotebookPen size={36} strokeWidth={1.2} />}<h2>{hasFilters ? 'No matches here' : isResources ? 'No resources published yet' : 'No practice published yet'}</h2><p>{hasFilters ? 'Try another search or clear your filters.' : isResources ? 'Books, playlists, and courses will appear here.' : 'Published essays, videos, and projects will appear here.'}</p>{hasFilters && <button type="button" className="button secondary" onClick={clearFilters}><X size={14} />Clear filters</button>}</div>}
+      <CollectionTable<LearningItem> key={page} label={isResources ? 'Resources' : 'Practice'} columns={isResources ? resourceColumns : practiceDefinition} defaults={isResources ? defaultResourceColumns : defaultPracticeColumns} rows={candidates} allRows={collection} model={model} rowLabel={item => item.title} view={tableViews[page]} onViewChange={updateTable} onColumnFilter={updateColumnFilter} onResetFilters={clearFilters} hasFilters={hasFilters}
+        onOpen={item => setModal({ type: 'creator' in item ? 'resource' : 'practice', id: item.id })}
+        renderCell={(item, column, visible) => renderCollectionCell(item, column, visible, library, viewPractice, id => setModal({ type: 'resource', id }))}
+        emptyTitle={isResources ? 'No resources published yet' : 'No practice published yet'} emptyDescription={isResources ? 'Books, playlists, and courses will appear here.' : 'Published essays, videos, and projects will appear here.'}
+        toolbar={<>
+          <div className="search-field"><Search size={16} aria-hidden="true" /><input ref={searchRef} type="search" aria-label={isResources ? 'Search resources' : 'Search practice'} placeholder={isResources ? 'Search resources…' : 'Search published work…'} value={filters.search} onChange={event => updateFilters({ search: event.target.value })} />{filters.search && <button type="button" className="clear-search" aria-label="Clear search" onClick={() => { updateFilters({ search: '' }); searchRef.current?.focus(); }}><X size={13} aria-hidden="true" /></button>}</div>
+
+        </>}
+        quickFilterCount={['subject', 'format', 'tier', 'resource'].filter(key => filters[key as keyof Filters] !== 'all').length}
+        quickFilters={showAll => <>
+          {(showAll || filters.subject !== 'all') && <label>Subject<Select label="Filter by subject" value={filters.subject} onChange={subject => updateFilters({ subject })}><option value="all">All subjects</option>{subjectOptions.map(subject => <option key={subject}>{subject}</option>)}</Select></label>}
+          {(showAll || filters.format !== 'all') && <label>Format<Select label="Filter by format" value={filters.format} onChange={format => updateFilters({ format })}><option value="all">All formats</option>{(isResources ? resourceFormats : practiceFormats).map(format => <option key={format}>{format}</option>)}</Select></label>}
+          {isResources && (showAll || filters.tier !== 'all') && <label>Tier<Select label="Filter by tier" value={filters.tier} onChange={tier => updateFilters({ tier })}><option value="all">All tiers</option>{resourceTiers.map(tier => <option key={tier.value} value={tier.value}>Tier {tier.value}</option>)}</Select></label>}
+          {!isResources && library.practice.length > 0 && (showAll || filters.resource !== 'all') && <label>Related resource<Select label="Filter by resource" value={filters.resource} onChange={resource => updateFilters({ resource })} className="resource-filter"><option value="all">All resources</option><option value="independent">Independent practice</option>{library.resources.map(resource => <option value={resource.id} key={resource.id}>{resource.title}</option>)}</Select></label>}
+        </>}
+        notice={filters.resource !== 'all' && !isResources && <div className="active-filter"><span>Related to <strong>{filters.resource === 'independent' ? 'Independent practice' : resourceById.get(filters.resource)?.title}</strong></span><button type="button" className="icon-button" aria-label="Clear resource filter" onClick={() => updateFilters({ resource: 'all' })}><X size={14} /></button></div>} />
     </main>
     {modal?.type === 'commands' && <Commands key={modal.mode} commands={commands} destinations={destinations} initialMode={modal.mode} onClose={() => setModal(null)} returnFocus={launcherRef.current} />}
     {modal?.type === 'shortcuts' && <KeyboardShortcuts onClose={() => setModal(null)} returnFocus={launcherRef.current} />}

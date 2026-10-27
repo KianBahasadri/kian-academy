@@ -48,6 +48,7 @@ test('loads committed data without browser storage or account/API requests', asy
 
 test('search, combined filters, sorting and status tabs find published resources', async ({ page }) => {
   await useFixture(page);
+  await page.getByRole('button', { name: 'Filters', exact: true }).click();
   await page.getByRole('combobox', { name: 'Filter by subject' }).selectOption('Mathematics');
   await page.getByRole('combobox', { name: 'Filter by format' }).selectOption('Playlist');
   await page.getByRole('searchbox').fill('scaling');
@@ -56,7 +57,7 @@ test('search, combined filters, sorting and status tabs find published resources
   await page.getByRole('searchbox').fill('no matching entry');
   await expect(page.getByRole('heading', { name: 'No matches here' })).toBeVisible();
   await page.getByRole('button', { name: 'Clear filters', exact: true }).click();
-  await page.getByRole('combobox', { name: 'Sort collection' }).selectOption('title');
+  await page.getByRole('button', { name: 'Sort by Resource', exact: true }).click();
   await expect(page.locator('tbody tr').first()).toContainText('Clear prose');
   await page.getByRole('button', { name: 'Completed 1', exact: true }).click();
   await expect(page.locator('tbody tr')).toHaveCount(1);
@@ -65,6 +66,7 @@ test('search, combined filters, sorting and status tabs find published resources
 
 test('resource tiers filter and sort independently of progress and explain the five levels', async ({ page }) => {
   await useFixture(page);
+  await page.getByRole('button', { name: 'Filters', exact: true }).click();
   const tiers = page.getByRole('combobox', { name: 'Filter by tier', exact: true });
   await expect(tiers.locator('option')).toHaveText(['All tiers', 'Tier 1', 'Tier 2', 'Tier 3', 'Tier 4', 'Tier 5']);
   await tiers.selectOption('2');
@@ -84,7 +86,7 @@ test('resource tiers filter and sort independently of progress and explain the f
   await expect(page.getByRole('heading', { name: 'No matches here' })).toBeVisible();
   await page.getByRole('button', { name: 'Clear filters', exact: true }).click();
   await expect(tiers).toHaveValue('all');
-  await page.getByRole('combobox', { name: 'Sort collection' }).selectOption('tier');
+  await page.getByRole('button', { name: 'Sort by Tier', exact: true }).click();
   await expect(page.locator('tbody tr').nth(0)).toContainText('Clear prose');
   await expect(page.locator('tbody tr').nth(1)).toContainText('Python basics');
   await expect(page.locator('tbody tr').nth(2)).toContainText('Vectors and transformations');
@@ -192,6 +194,7 @@ test('related and independent practice can be browsed and linked work opens safe
   await expect(page.locator('tbody tr')).toHaveCount(1);
   await expect(page.locator('tbody')).toContainText('Explaining a matrix');
   await page.getByRole('button', { name: 'Clear resource filter' }).click();
+  await page.getByRole('button', { name: 'Filters', exact: true }).click();
   await page.getByRole('combobox', { name: 'Filter by resource' }).selectOption('independent');
   await expect(page.locator('tbody tr')).toHaveCount(1);
   await page.getByRole('button', { name: 'Details for A recorded explanation' }).click();
