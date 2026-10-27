@@ -2,7 +2,7 @@
 
 My learning resources and the work I create from them, published as a static portfolio. The interface follows Grakata's compact tables, IBM Plex typography, and muted dark and light palettes.
 
-**Site:** https://bahasadri.com · **Repository:** https://github.com/KianBahasadri/kian-academy
+**Site:** https://kianbahasadri.github.io/kian-academy/ · **Repository:** https://github.com/KianBahasadri/kian-academy
 
 ## Publish learning updates
 
@@ -40,7 +40,7 @@ npm run preview       # Preview the static build
 npm test              # Read-only portfolio and publication tests
 ```
 
-Tests use system Chromium at `/usr/bin/chromium`, or `CHROMIUM_PATH`. They run on port 5175, separately from the app. Fonts and icons are bundled locally. Relative asset paths and hash navigation support both GitHub project URLs and the custom domain.
+Tests use system Chromium at `/usr/bin/chromium`, or `CHROMIUM_PATH`. They run on port 5175, separately from the app. Fonts and icons are bundled locally. Relative asset paths and hash navigation support the GitHub Pages project URL prefix.
 
 ## Source
 
