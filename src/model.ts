@@ -1,4 +1,4 @@
-export const resourceFormats = ['Playlist', 'Course', 'Book', 'Textbook', 'Article', 'Other'] as const;
+export const resourceFormats = ['YouTube playlist', 'Course', 'Book', 'Textbook', 'Article', 'Other'] as const;
 export const practiceFormats = ['Essay', 'Video', 'Project', 'Notes', 'Other'] as const;
 export const resourceTiers = [
   { value: 1, description: 'Made for a general reader. No prior study, no university background, and a manageable scope for independent learning.' },

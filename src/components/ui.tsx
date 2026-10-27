@@ -1,16 +1,21 @@
 import { useEffect, useId, useRef } from 'react';
 import type { ReactNode } from 'react';
-import { Book, BookOpen, Check, Code2, FileText, GraduationCap, Link2, NotebookPen, Play, Video, X } from 'lucide-react';
+import { Book, BookOpen, Check, Code2, FileText, Globe, GraduationCap, Link2, NotebookPen, Video, X, Youtube } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ResourceTier } from '../model';
 export { Select } from './Select';
 
 const formatIcons: Record<string, LucideIcon> = {
-  Playlist: Play, Course: GraduationCap, Book, Textbook: BookOpen, Article: FileText,
+  Course: GraduationCap, Book, Textbook: BookOpen, Article: Globe,
   Essay: FileText, Video, Project: Code2, Notes: NotebookPen, Other: Link2,
 };
 
 export function FormatIcon({ format, size = 18 }: { format: string; size?: number }) {
+  if (format === 'YouTube playlist') return <svg width={size} height={size} viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M9 3h13a3 3 0 0 1 3 3v9" />
+    <path d="M6 6h13a3 3 0 0 1 3 3v9" />
+    <Youtube x={0} y={5} size={24} strokeWidth={1.6} aria-hidden="true" />
+  </svg>;
   const Icon = formatIcons[format] ?? Link2;
   return <Icon size={size} strokeWidth={1.6} aria-hidden="true" />;
 }

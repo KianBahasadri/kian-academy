@@ -24,7 +24,7 @@ Keep `version` at `1`. Both `resources` and `practice` are arrays. IDs must be u
 }
 ```
 
-Formats: `Playlist`, `Course`, `Book`, `Textbook`, `Article`, `Other`.
+Formats: `YouTube playlist`, `Course`, `Book`, `Textbook`, `Article`, `Other`.
 
 `tier` is required and must be an integer from `1` to `5`. It follows the previous tier system, describing the intended audience and assumed knowledge independently of learning progress:
 

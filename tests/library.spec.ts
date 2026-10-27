@@ -14,7 +14,7 @@ const date = '2026-10-26T12:00:00Z';
 const fixture: Library = {
   version: 1,
   resources: [
-    { id: 'vectors', title: 'Vectors and transformations', creator: 'Test author', format: 'Playlist', tier: 3, subject: 'Mathematics', url: 'https://example.com/vectors', description: 'A visual introduction.', notes: 'Linear transformations preserve addition and scaling.', status: 'completed', progress: 100, createdAt: date, updatedAt: date },
+    { id: 'vectors', title: 'Vectors and transformations', creator: 'Test author', format: 'YouTube playlist', tier: 3, subject: 'Mathematics', url: 'https://example.com/vectors', description: 'A visual introduction.', notes: 'Linear transformations preserve addition and scaling.', status: 'completed', progress: 100, createdAt: date, updatedAt: date },
     { id: 'python', title: 'Python basics', creator: 'Test teacher', format: 'Course', tier: 2, subject: 'Computer science', url: 'https://example.com/python', description: '', notes: 'Functions and small programs.', status: 'learning', progress: 40, createdAt: date, updatedAt: date },
     { id: 'writing', title: 'Clear prose', creator: 'Test writer', format: 'Book', tier: 1, subject: 'Writing', url: '', description: '', notes: '', status: 'planned', progress: 0, createdAt: date, updatedAt: date },
   ],
@@ -51,7 +51,7 @@ test('search, combined filters, sorting and status tabs find published resources
   await useFixture(page);
   await page.getByRole('button', { name: 'Filters', exact: true }).click();
   await chooseOption(page, 'Filter by subject', 'Mathematics');
-  await chooseOption(page, 'Filter by format', 'Playlist');
+  await chooseOption(page, 'Filter by format', 'YouTube playlist');
   await page.getByRole('searchbox').fill('scaling');
   await expect(page.locator('tbody tr')).toHaveCount(1);
   await expect(page.locator('tbody')).toContainText('Vectors and transformations');
@@ -233,15 +233,15 @@ test('styled dropdowns search, select by keyboard, and restore unmatched input o
   await expect(list.getByRole('option')).toHaveCount(7);
   await expect(list.getByRole('option', { name: 'All formats', exact: true })).toHaveAttribute('aria-selected', 'true');
   await format.fill('  pLaYlIsT  ');
-  await expect(list.getByRole('option')).toHaveText(['Playlist']);
+  await expect(list.getByRole('option')).toHaveText(['YouTube playlist']);
   await expect(page.getByText('1 option available', { exact: true })).toHaveCount(1);
   await expect(format).toBeFocused();
   const optionId = await list.getByRole('option').getAttribute('id');
   await expect(format).toHaveAttribute('aria-activedescendant', optionId!);
   await expect(page.locator('tbody tr')).toHaveCount(3);
   await page.keyboard.press('Enter');
-  await expect(format).toHaveValue('Playlist');
-  await expect(page.locator('input[type="hidden"][name="Filter by format"]')).toHaveValue('Playlist');
+  await expect(format).toHaveValue('YouTube playlist');
+  await expect(page.locator('input[type="hidden"][name="Filter by format"]')).toHaveValue('YouTube playlist');
   await expect(page.locator('tbody tr')).toHaveCount(1);
   await format.click(); await page.keyboard.press('ArrowDown'); await page.keyboard.press('Enter');
   await expect(format).toHaveValue('Course');

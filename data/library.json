@@ -5,7 +5,7 @@
       "id": "human-biology",
       "title": "Human Behavioral Biology",
       "creator": "Robert Sapolsky",
-      "format": "Playlist",
+      "format": "YouTube playlist",
       "tier": 2,
       "subject": "Biology",
       "url": "https://www.youtube.com/playlist?list=PLzxlKUNNLxmEvjCSUAurMReJBZxaLdD1_",
@@ -14,7 +14,7 @@
       "status": "planned",
       "progress": 0,
       "createdAt": "2026-10-26T22:54:29.124Z",
-      "updatedAt": "2026-10-27T01:46:53.927Z"
+      "updatedAt": "2026-10-27T10:06:17Z"
     },
     {
       "id": "feeling-good",
