@@ -7,7 +7,7 @@ const fullDate = (value: string) => new Date(value).toLocaleDateString(undefined
 
 export function ResourceDetails({ resource, practice, onPractice, onClose }: { resource: Resource; practice: Practice[]; onPractice: (id: string) => void; onClose: () => void }) {
   return <Dialog title="Resource details" onClose={onClose} drawer><div className="dialog-body detail-body">
-    <div className="detail-identity"><ResourceMark format={resource.format} subject={resource.subject} large /><span className="eyebrow">{resource.format}<span>·</span>{resource.subject}</span></div>
+    <div className="detail-identity"><ResourceMark format={resource.format} subject={resource.subject} large /><span className="eyebrow">{resource.format}<span>·</span>{resource.subject}<span className="tier-tag"><Tier value={resource.tier} /></span></span></div>
     <h3 className="detail-title">{resource.title}</h3>{resource.creator && <p className="detail-creator">{resource.creator}</p>}
     {resource.publication && <dl className="resource-bibliography" aria-label="Publication details">
       <dt>Publication year</dt><dd>{resource.publication.year}</dd>
@@ -20,7 +20,6 @@ export function ResourceDetails({ resource, practice, onPractice, onClose }: { r
     </dl>}
     {resource.description && <p className="detail-description">{resource.description}</p>}
     {safeUrl(resource.url) && <><div className="detail-actions"><a className="button primary" href={safeUrl(resource.url)} target="_blank" rel="noopener noreferrer">Open resource<ArrowUpRight size={16} /></a></div><span className="source-host"><ExternalLink size={12} />{sourceHost(resource.url)}</span></>}
-    <section className="detail-section"><div className="detail-section-heading"><h3>Resource tier</h3><Tier value={resource.tier} /></div></section>
     <section className="detail-section"><div className="detail-section-heading"><h3>Learning progress</h3><Status value={resource.status} /></div><div className="published-progress"><progress aria-label={`${resource.title} progress`} value={resource.progress} max={100} /><span className="mono">{resource.progress}%</span></div></section>
     {resource.notes.trim() && <section className="detail-section"><div className="detail-section-heading"><h3>Notes</h3></div><div className="practice-content">{resource.notes}</div></section>}
     <section className="detail-section"><div className="detail-section-heading"><h3>Related practice <span className="count">{practice.length}</span></h3></div>{practice.length ? <div className="related-list">{practice.map(item => <button key={item.id} type="button" onClick={() => onPractice(item.id)}><FormatIcon format={item.format} /><span>{item.title}<small>{item.format} · {item.status === 'draft' ? 'Draft' : 'Finished'}</small></span><ChevronRight size={15} /></button>)}</div> : <div className="related-empty"><NotebookPen size={23} strokeWidth={1.4} /><p>No related work published yet.</p></div>}</section>

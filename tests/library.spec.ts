@@ -78,7 +78,6 @@ test('resource tiers filter and sort independently of progress and explain the f
   await page.getByRole('button', { name: 'Details for Python basics' }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByText('Tier 2', { exact: true })).toBeVisible();
-  await expect(dialog).toContainText('Resource tier');
   await expect(dialog.getByRole('progressbar')).toHaveAttribute('value', '40');
   await page.keyboard.press('Escape');
   await chooseOption(page, 'Filter by tier', 'Tier 3');
