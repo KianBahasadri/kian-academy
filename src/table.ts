@@ -59,7 +59,9 @@ export function filterRows<Row>(items: Row[], filters: ColumnFilters, model: Tab
       return (!filter.values.length || filter.values.some(matches)) && !filter.excludedValues.some(matches);
     }
     if (typeof value !== 'number') return false;
-    return filter.operator === 'atLeast' ? value >= filter.value : filter.operator === 'atMost' ? value <= filter.value : value === filter.value;
+    if (filter.operator === 'atLeast') return value >= filter.value;
+    if (filter.operator === 'atMost') return value <= filter.value;
+    return value === filter.value;
   }));
 }
 

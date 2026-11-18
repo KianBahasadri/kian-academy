@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { ArrowUpRight, NotebookPen } from 'lucide-react';
 import type { Library, Practice, Resource } from './model';
 import { practiceFormats, resourceFormats, safeUrl, sourceHost, wordCount } from './model';
@@ -57,7 +58,9 @@ export function collectionModel(library: Library): TableModel<LearningItem> {
         case 'practice': return counts.get(item.id) ?? 0;
         case 'notes': return 'notes' in item ? item.notes || null : null;
         case 'description': return 'description' in item ? item.description || null : null;
-        case 'resource': return 'resourceId' in item ? item.resourceId ? resources.get(item.resourceId)!.title : 'Independent' : null;
+        case 'resource':
+          if (!('resourceId' in item)) return null;
+          return item.resourceId ? resources.get(item.resourceId)!.title : 'Independent';
         case 'words': return 'content' in item ? wordCount(item.content) : null;
         case 'content': return 'content' in item ? item.content || null : null;
         case 'createdAt': return item.createdAt;
@@ -78,23 +81,64 @@ export function collectionModel(library: Library): TableModel<LearningItem> {
   };
 }
 
-export function renderCollectionCell(item: LearningItem, column: TableColumn, library: Library, onPractice: (resourceId: string) => void, onResource: (id: string) => void) {
+export function renderCollectionCell(
+  item: LearningItem,
+  column: TableColumn,
+  model: TableModel<LearningItem>,
+  onPractice: (resourceId: string) => void,
+  onResource: (id: string) => void,
+): ReactNode {
   switch (column.key) {
-    case 'title': return <><ResourceMark format={item.format} subjects={'subjects' in item ? item.subjects : [item.subject]} /><span className="item-identity"><span>{item.title}</span>{'content' in item && <small>{wordCount(item.content) ? `${wordCount(item.content).toLocaleString()} words` : item.url ? 'Linked work' : 'Draft'}</small>}</span></>;
+    case 'title': {
+      let byline = '';
+      if ('content' in item) {
+        const words = wordCount(item.content);
+        const emptyByline = item.url ? 'Linked work' : 'Draft';
+        byline = words ? `${words.toLocaleString()} words` : emptyByline;
+      }
+      return <>
+        <ResourceMark format={item.format} subjects={'subjects' in item ? item.subjects : [item.subject]} />
+        <span className="item-identity"><span>{item.title}</span>{byline && <small>{byline}</small>}</span>
+      </>;
+    }
     case 'format': return <span className="format-label">{item.format}</span>;
     case 'subjects': return 'subjects' in item ? <Subjects values={item.subjects} /> : null;
     case 'tier': return 'tier' in item ? <span className="tier-label">{item.tier}</span> : null;
     case 'status': return <Status value={item.status} />;
-    case 'progress': return 'progress' in item ? item.status === 'prerequisites' ? <Status value={item.status} /> : item.status === 'planned' ? <span className="not-started">Not started</span> : <div className={`table-progress ${item.status === 'completed' ? 'complete' : ''}`}><div><Status value={item.status} /><span className="mono">{item.progress}%</span></div><progress aria-label={`${item.title} progress`} value={item.progress} max={100} /></div> : null;
-    case 'practice': {
-      const count = library.practice.filter(practice => practice.resourceId === item.id).length;
-      return count ? <button type="button" className="practice-count" aria-label={`View practice for ${item.title}`} onClick={() => onPractice(item.id)}><NotebookPen size={14} aria-hidden="true" />{count}</button> : <span className="muted">0</span>;
+    case 'progress': {
+      if (!('progress' in item)) return null;
+      if (item.status === 'prerequisites') return <Status value={item.status} />;
+      if (item.status === 'planned') return <span className="not-started">Not started</span>;
+      return <div className={`table-progress ${item.status === 'completed' ? 'complete' : ''}`}>
+        <div><Status value={item.status} /><span className="mono">{item.progress}%</span></div>
+        <progress aria-label={`${item.title} progress`} value={item.progress} max={100} />
+      </div>;
     }
-    case 'resource': return 'resourceId' in item && item.resourceId ? <button type="button" className="table-resource-link" onClick={() => onResource(item.resourceId!)}>{library.resources.find(resource => resource.id === item.resourceId)!.title}</button> : <span className="muted">Independent</span>;
-    case 'createdAt': case 'updatedAt': return <time dateTime={item[column.key]} title={new Date(item[column.key]).toLocaleString()}>{new Date(item[column.key]).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</time>;
-    case 'url': return safeUrl(item.url) ? <a className="table-website" href={safeUrl(item.url)} target="_blank" rel="noopener noreferrer">{sourceHost(item.url)}<ArrowUpRight size={13} aria-hidden="true" /></a> : <span className="muted">—</span>;
+    case 'practice': {
+      const count = model.value(item, column.key);
+      if (!count) return <span className="muted">0</span>;
+      return <button type="button" className="practice-count" aria-label={`View practice for ${item.title}`} onClick={() => onPractice(item.id)}>
+        <NotebookPen size={14} aria-hidden="true" />{count}
+      </button>;
+    }
+    case 'resource': {
+      const resourceId = 'resourceId' in item ? item.resourceId : null;
+      if (!resourceId) return <span className="muted">Independent</span>;
+      return <button type="button" className="table-resource-link" onClick={() => onResource(resourceId)}>{model.value(item, column.key)}</button>;
+    }
+    case 'createdAt':
+    case 'updatedAt': {
+      const value = item[column.key];
+      const date = new Date(value);
+      return <time dateTime={value} title={date.toLocaleString()}>{date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</time>;
+    }
+    case 'url': {
+      const url = safeUrl(item.url);
+      if (!url) return <span className="muted">—</span>;
+      return <a className="table-website" href={url} target="_blank" rel="noopener noreferrer">{sourceHost(item.url)}<ArrowUpRight size={13} aria-hidden="true" /></a>;
+    }
     default: {
-      const value = column.key === 'words' && 'content' in item ? wordCount(item.content) : column.key in item ? item[column.key as keyof typeof item] : null;
+      const value = model.value(item, column.key);
       return value === '' || value === null ? <span className="muted">—</span> : String(value);
     }
   }

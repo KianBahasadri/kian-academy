@@ -83,28 +83,59 @@ function validIsbn13(value: unknown): boolean {
   return /^97[89]\d{10}$/.test(digits) && [...digits].reduce((sum, digit, index) => sum + Number(digit) * (index % 2 ? 3 : 1), 0) % 10 === 0;
 }
 
+function validProgress(status: unknown, progress: unknown): boolean {
+  if (typeof progress !== 'number' || !Number.isInteger(progress)) return false;
+  switch (status) {
+    case 'prerequisites':
+    case 'planned': return progress === 0;
+    case 'learning': return progress >= 0 && progress < 100;
+    case 'completed': return progress === 100;
+    default: return false;
+  }
+}
+
 export function validateLibrary(data: unknown): Library {
-  const object = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
-  const strings = (value: Record<string, unknown>, keys: string[]) => keys.every(key => typeof value[key] === 'string');
-  const dates = (value: Record<string, unknown>) => ['createdAt', 'updatedAt'].every(key => typeof value[key] === 'string' && Number.isFinite(Date.parse(value[key] as string)));
-  const link = (value: unknown) => typeof value === 'string' && (value === '' || Boolean(safeUrl(value)));
-  const subjects = (value: unknown) => Array.isArray(value) && value.length > 0 && value.every(subject => typeof subject === 'string' && subject.trim().length > 0) && new Set(value).size === value.length;
-  const publication = (value: unknown, book: boolean) => {
+  const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
+  const hasStrings = (value: Record<string, unknown>, keys: string[]): boolean => keys.every(key => typeof value[key] === 'string');
+  const validDates = (value: Record<string, unknown>): boolean => ['createdAt', 'updatedAt'].every(key => {
+    const date = value[key];
+    return typeof date === 'string' && Number.isFinite(Date.parse(date));
+  });
+  const validLink = (value: unknown): boolean => typeof value === 'string' && (value === '' || Boolean(safeUrl(value)));
+  const validSubjects = (value: unknown): boolean => Array.isArray(value) && value.length > 0 &&
+    value.every(subject => typeof subject === 'string' && subject.trim().length > 0) && new Set(value).size === value.length;
+  const validPublication = (value: unknown, book: boolean): boolean => {
     if (value === undefined) return true;
-    if (!object(value)) return false;
+    if (!isRecord(value)) return false;
     return typeof value.year === 'number' && Number.isInteger(value.year) && value.year > 0 && value.year <= 9999 &&
       typeof value.publisher === 'string' && value.publisher.trim().length > 0 &&
-      ['edition', 'binding'].every(key => value[key] === undefined || (typeof value[key] === 'string' && (value[key] as string).trim().length > 0)) &&
+      [value.edition, value.binding].every(text => text === undefined || (typeof text === 'string' && text.trim().length > 0)) &&
       (book ? validIsbn13(value.isbn) : value.isbn === undefined) &&
       (value.pages === undefined || (typeof value.pages === 'number' && Number.isInteger(value.pages) && value.pages > 0)) &&
       typeof value.sourceUrl === 'string' && Boolean(safeUrl(value.sourceUrl));
   };
-  if (!object(data) || data.version !== 1 || !Array.isArray(data.resources) || !Array.isArray(data.practice)) throw new Error('Unsupported library');
-  if (!data.resources.every(r => object(r) && strings(r, ['id', 'title', 'creator', 'description', 'notes']) && subjects(r.subjects) && r.id && r.title && dates(r) && resourceFormats.includes(r.format as ResourceFormat) && resourceTiers.some(tier => tier.value === r.tier) && ['prerequisites', 'planned', 'learning', 'completed'].includes(r.status as string) && typeof r.progress === 'number' && Number.isInteger(r.progress) && r.progress >= 0 && r.progress <= 100 && (r.status !== 'completed' || r.progress === 100) && (!['prerequisites', 'planned'].includes(r.status as string) || r.progress === 0) && (r.status !== 'learning' || r.progress < 100) && link(r.url))) throw new Error('Invalid resources');
-  if (!data.resources.every(r => publication(r.publication, r.format === 'Book' || r.format === 'Textbook'))) throw new Error('Invalid resource publication metadata');
-  const ids = new Set(data.resources.map(r => r.id));
-  if (ids.size !== data.resources.length) throw new Error('Duplicate resources');
-  if (!data.practice.every(p => object(p) && strings(p, ['id', 'title', 'subject', 'content']) && p.id && p.title && dates(p) && practiceFormats.includes(p.format as PracticeFormat) && ['draft', 'finished'].includes(p.status as string) && (p.resourceId === null || ids.has(p.resourceId)) && link(p.url))) throw new Error('Invalid practice');
-  if (new Set(data.practice.map(p => p.id)).size !== data.practice.length) throw new Error('Duplicate practice');
+
+  if (!isRecord(data) || data.version !== 1 || !Array.isArray(data.resources) || !Array.isArray(data.practice)) throw new Error('Unsupported library');
+  const { resources, practice } = data;
+  if (!resources.every(resource =>
+    isRecord(resource) &&
+    hasStrings(resource, ['id', 'title', 'creator', 'description', 'notes']) && resource.id && resource.title &&
+    validSubjects(resource.subjects) && validDates(resource) &&
+    resourceFormats.some(format => format === resource.format) &&
+    resourceTiers.some(tier => tier.value === resource.tier) &&
+    validProgress(resource.status, resource.progress) && validLink(resource.url)
+  )) throw new Error('Invalid resources');
+  if (!resources.every(resource => validPublication(resource.publication, resource.format === 'Book' || resource.format === 'Textbook'))) throw new Error('Invalid resource publication metadata');
+
+  const resourceIds = new Set(resources.map(resource => resource.id));
+  if (resourceIds.size !== resources.length) throw new Error('Duplicate resources');
+  if (!practice.every(item =>
+    isRecord(item) &&
+    hasStrings(item, ['id', 'title', 'subject', 'content']) && item.id && item.title && validDates(item) &&
+    practiceFormats.some(format => format === item.format) &&
+    (item.status === 'draft' || item.status === 'finished') &&
+    (item.resourceId === null || resourceIds.has(item.resourceId)) && validLink(item.url)
+  )) throw new Error('Invalid practice');
+  if (new Set(practice.map(item => item.id)).size !== practice.length) throw new Error('Duplicate practice');
   return data as unknown as Library;
 }
