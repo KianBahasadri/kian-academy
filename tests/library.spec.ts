@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import type { Library } from '../src/model';
-import { parseLibrary } from '../src/model';
+import { validateLibrary } from '../src/model';
 import { chooseOption } from './helpers';
 
 const published = JSON.parse(readFileSync('data/library.json', 'utf8')) as Library;
@@ -26,14 +26,18 @@ const fixture: Library = {
 };
 
 async function useFixture(page: Page, read: () => Library = () => fixture) {
-  await page.route('**/src/library.ts', route => route.fulfill({ contentType: 'application/javascript', body: `export const library = ${JSON.stringify(read())}; export const repositoryUrl = 'https://github.com/KianBahasadri/kian-academy';` }));
+  await page.route('**/src/library.ts', route => route.fulfill({ contentType: 'application/javascript', body: `export const library = ${JSON.stringify(read())};` }));
   await page.goto('/');
 }
 
-test('loads committed data without browser storage or account/API requests', async ({ page }) => {
-  const errors: string[] = [], apiRequests: string[] = [];
+test('loads committed data using only local static assets and no browser storage', async ({ page, baseURL }) => {
+  const siteOrigin = new URL(baseURL!).origin;
+  const errors: string[] = [], unexpectedRequests: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
-  page.on('request', request => { if (/\/api\/|clerk\./.test(request.url())) apiRequests.push(request.url()); });
+  page.on('request', request => {
+    const url = new URL(request.url());
+    if (url.origin !== siteOrigin || url.pathname === '/api' || url.pathname.startsWith('/api/')) unexpectedRequests.push(url.href);
+  });
   await page.addInitScript(() => {
     const forbidden = () => { throw new Error('The published page must not use browser storage'); };
     Storage.prototype.getItem = forbidden; Storage.prototype.setItem = forbidden; Storage.prototype.removeItem = forbidden;
@@ -45,7 +49,7 @@ test('loads committed data without browser storage or account/API requests', asy
   await page.getByRole('link', { name: 'Practice', exact: true }).click();
   if (published.practice.length) await expect(page.locator('tbody tr')).toHaveCount(published.practice.length);
   else await expect(page.getByRole('heading', { name: 'No practice published yet' })).toBeVisible();
-  expect(errors).toEqual([]); expect(apiRequests).toEqual([]);
+  expect(errors).toEqual([]); expect(unexpectedRequests).toEqual([]);
 });
 
 test('search, combined filters, sorting and status tabs find published resources', async ({ page }) => {
@@ -85,12 +89,12 @@ test('resources needing prerequisites are separate from resources ready to learn
 test('prerequisite status requires zero progress and does not apply to practice', () => {
   const data = structuredClone(fixture);
   data.resources[2].status = 'prerequisites';
-  expect(parseLibrary(JSON.stringify(data)).resources[2].status).toBe('prerequisites');
+  expect(validateLibrary(data).resources[2].status).toBe('prerequisites');
   data.resources[2].progress = 1;
-  expect(() => parseLibrary(JSON.stringify(data))).toThrow('Invalid resources');
+  expect(() => validateLibrary(data)).toThrow('Invalid resources');
   data.resources[2].progress = 0;
   const invalidPractice = { ...data, practice: [{ ...data.practice[0], status: 'prerequisites' }] };
-  expect(() => parseLibrary(JSON.stringify(invalidPractice))).toThrow('Invalid practice');
+  expect(() => validateLibrary(invalidPractice)).toThrow('Invalid practice');
 });
 
 test('resource tiers filter and sort independently of progress and explain the five levels', async ({ page }) => {
@@ -269,8 +273,8 @@ test('styled dropdowns search, select by keyboard, and restore unmatched input o
   await expect(page.locator('tbody tr')).toHaveCount(3);
   await page.keyboard.press('Enter');
   await expect(format).toHaveValue('YouTube playlist');
-  await expect(page.locator('input[type="hidden"][name="Filter by format"]')).toHaveValue('YouTube playlist');
   await expect(page.locator('tbody tr')).toHaveCount(1);
+  await expect(page.locator('tbody')).toContainText('Vectors and transformations');
   await format.click(); await page.keyboard.press('ArrowDown'); await page.keyboard.press('Enter');
   await expect(format).toHaveValue('Course');
   await expect(page.locator('tbody')).toContainText('Python basics');
@@ -357,7 +361,7 @@ test('publication validation rejects broken relationships without changing sourc
   try {
     const data = structuredClone(fixture); data.practice[0].resourceId = 'missing-resource';
     const path = join(directory, 'library.json'); await writeFile(path, JSON.stringify(data));
-    const result = spawnSync(process.execPath, ['--experimental-strip-types', 'scripts/validate-data.mjs', path], { encoding: 'utf8' });
+    const result = spawnSync(process.execPath, ['scripts/validate-data.mjs', path], { encoding: 'utf8' });
     expect(result.status).toBe(1); expect(result.stderr).toContain('Invalid practice');
     expect(await readFile('data/library.json', 'utf8')).toBe(before);
   } finally { await rm(directory, { recursive: true, force: true }); }
@@ -371,7 +375,7 @@ test('publication validation requires an integer resource tier from 1 to 5', asy
     for (const tier of [1, 2, 3, 4, 5, undefined, null, 0, 6, 1.5, '2']) {
       const data = { ...fixture, resources: [{ ...fixture.resources[0], tier }, ...fixture.resources.slice(1)] };
       await writeFile(path, JSON.stringify(data));
-      const result = spawnSync(process.execPath, ['--experimental-strip-types', 'scripts/validate-data.mjs', path], { encoding: 'utf8' });
+      const result = spawnSync(process.execPath, ['scripts/validate-data.mjs', path], { encoding: 'utf8' });
       if (typeof tier === 'number' && Number.isInteger(tier) && tier >= 1 && tier <= 5) {
         expect(result.status, `Tier ${tier} must be accepted`).toBe(0);
       } else {
@@ -386,9 +390,9 @@ test('publication validation requires an integer resource tier from 1 to 5', asy
 test('resources require subject lists and reject invalid lists instead of silently replacing them', () => {
   const data = structuredClone(fixture);
   data.resources[0].subjects = ['Mathematics', 'Physics'];
-  expect(parseLibrary(JSON.stringify(data)).resources[0].subjects).toEqual(['Mathematics', 'Physics']);
+  expect(validateLibrary(data).resources[0].subjects).toEqual(['Mathematics', 'Physics']);
   for (const subjects of [undefined, null, 'Mathematics', [], [''], ['  '], ['Mathematics', 1], ['Mathematics', 'Mathematics']]) {
     const invalid = { ...data, resources: [{ ...data.resources[0], subjects }, ...data.resources.slice(1)] };
-    expect(() => parseLibrary(JSON.stringify(invalid)), `Reject ${JSON.stringify(subjects)}`).toThrow('Invalid resources');
+    expect(() => validateLibrary(invalid), `Reject ${JSON.stringify(subjects)}`).toThrow('Invalid resources');
   }
 });

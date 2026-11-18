@@ -1,11 +1,11 @@
-export type ColumnKey = string;
-export type TableValue = string | string[] | number | boolean | null;
+type ColumnKey = string;
+export type TableValue = string | string[] | number | null;
 export type FilterChoice = { value: string; label: string };
 export type TableColumn = {
-  key: ColumnKey; title: string; kind?: 'boolean' | 'number'; required?: boolean; wrap?: boolean;
-  width?: number; minWidth?: number; maxWidth?: number; align?: 'right';
+  key: ColumnKey; title: string; required?: boolean; wrap?: boolean;
+  width: number; minWidth?: number; align?: 'right';
   choices?: 'values' | FilterChoice[];
-  number?: { min: number; max: number; step?: number | 'any'; unknown?: boolean };
+  number?: { min: number; max: number };
 };
 export interface TableModel<Row> {
   value: (item: Row, key: ColumnKey) => TableValue;
@@ -13,9 +13,13 @@ export interface TableModel<Row> {
   matchesChoice?: (item: Row, key: ColumnKey, choice: string) => boolean | undefined;
 }
 export type ColumnSort = { key: ColumnKey; direction: 1 | -1 };
-export type ColumnFilter = { kind: 'text'; value: string } | { kind: 'choice'; values: string[]; excludedValues?: string[] } | { kind: 'number'; operator: 'equals' | 'atLeast' | 'atMost' | 'unknown'; value: number };
-export type ColumnFilters = Partial<Record<ColumnKey, ColumnFilter>>;
-export type ColumnPreferences = { order: ColumnKey[]; visible: ColumnKey[] };
+export const numberFilterLabels = { equals: 'Equals', atLeast: 'At least', atMost: 'At most' } as const;
+export type ColumnFilter =
+  | { kind: 'text'; value: string }
+  | { kind: 'choice'; values: string[]; excludedValues: string[] }
+  | { kind: 'number'; operator: keyof typeof numberFilterLabels; value: number };
+type ColumnFilters = Partial<Record<ColumnKey, ColumnFilter>>;
+type ColumnPreferences = { order: ColumnKey[]; visible: ColumnKey[] };
 export type ColumnDropTarget = { key: ColumnKey; edge: 'before' | 'after' };
 
 export function tableValueText(value: TableValue): string {
@@ -37,8 +41,8 @@ export function sortRows<Row>(items: Row[], sorting: ColumnSort[], model: TableM
         if (av !== bv) return av === null ? 1 : -1;
         continue;
       }
-      const result = model.compare?.(a, b, sort.key) ?? (((typeof av === 'boolean' && typeof bv === 'boolean') || (typeof av === 'number' && typeof bv === 'number'))
-        ? Number(av) - Number(bv) : tableValueText(av).localeCompare(tableValueText(bv), undefined, { sensitivity: 'base', numeric: true }));
+      const result = model.compare?.(a, b, sort.key) ?? (typeof av === 'number' && typeof bv === 'number'
+        ? av - bv : tableValueText(av).localeCompare(tableValueText(bv), undefined, { sensitivity: 'base', numeric: true }));
       if (result) return result * sort.direction;
     }
     return 0;
@@ -52,9 +56,8 @@ export function filterRows<Row>(items: Row[], filters: ColumnFilters, model: Tab
     if (filter.kind === 'text') return tableValueText(value).toLocaleLowerCase().includes(filter.value.trim().toLocaleLowerCase());
     if (filter.kind === 'choice') {
       const matches = (choice: string) => model.matchesChoice?.(item, key, choice) ?? (Array.isArray(value) ? value.includes(choice) : String(value) === choice);
-      return (!filter.values.length || filter.values.some(matches)) && !filter.excludedValues?.some(matches);
+      return (!filter.values.length || filter.values.some(matches)) && !filter.excludedValues.some(matches);
     }
-    if (filter.operator === 'unknown') return value === null;
     if (typeof value !== 'number') return false;
     return filter.operator === 'atLeast' ? value >= filter.value : filter.operator === 'atMost' ? value <= filter.value : value === filter.value;
   }));
@@ -78,14 +81,13 @@ export function filterLabel(filter: ColumnFilter, choices?: FilterChoice[]): str
   if (filter.kind === 'choice') {
     const labels = (values: string[]) => values.map(value => choices?.find(choice => choice.value === value)?.label ?? value).join(' or ');
     const included = labels(filter.values) || 'Any';
-    return filter.excludedValues?.length ? `${included} except ${labels(filter.excludedValues)}` : included;
+    return filter.excludedValues.length ? `${included} except ${labels(filter.excludedValues)}` : included;
   }
-  return filter.operator === 'unknown' ? 'Unknown' : `${filter.operator === 'atLeast' ? 'At least' : filter.operator === 'atMost' ? 'At most' : 'Equals'} ${filter.value}`;
+  return `${numberFilterLabels[filter.operator]} ${filter.value}`;
 }
 
 export function filterChoices<Row>(column: TableColumn, items: Row[], model: TableModel<Row>): FilterChoice[] | undefined {
   if (Array.isArray(column.choices)) return column.choices;
-  if (column.kind === 'boolean') return [{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }];
   if (column.choices === 'values') return [...new Set(items.flatMap(item => {
     const value = model.value(item, column.key);
     return Array.isArray(value) ? value : [String(value)];

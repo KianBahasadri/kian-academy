@@ -8,13 +8,13 @@ export const resourceTiers = [
   { value: 5, description: 'Written for specialists in a narrow area, beyond general expertise in the wider discipline.' },
 ] as const;
 
-export type ResourceFormat = typeof resourceFormats[number];
+type ResourceFormat = typeof resourceFormats[number];
 export type ResourceTier = typeof resourceTiers[number]['value'];
-export type PracticeFormat = typeof practiceFormats[number];
-export type ResourceStatus = 'prerequisites' | 'planned' | 'learning' | 'completed';
-export type PracticeStatus = 'draft' | 'finished';
+type PracticeFormat = typeof practiceFormats[number];
+type ResourceStatus = 'prerequisites' | 'planned' | 'learning' | 'completed';
+type PracticeStatus = 'draft' | 'finished';
 
-export interface ResourcePublication {
+interface ResourcePublication {
   year: number;
   publisher: string;
   edition?: string;
@@ -83,9 +83,7 @@ function validIsbn13(value: unknown): boolean {
   return /^97[89]\d{10}$/.test(digits) && [...digits].reduce((sum, digit, index) => sum + Number(digit) * (index % 2 ? 3 : 1), 0) % 10 === 0;
 }
 
-// Invalid published data must fail the build instead of being silently replaced.
-export function parseLibrary(raw: string): Library {
-  const data: unknown = JSON.parse(raw);
+export function validateLibrary(data: unknown): Library {
   const object = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
   const strings = (value: Record<string, unknown>, keys: string[]) => keys.every(key => typeof value[key] === 'string');
   const dates = (value: Record<string, unknown>) => ['createdAt', 'updatedAt'].every(key => typeof value[key] === 'string' && Number.isFinite(Date.parse(value[key] as string)));

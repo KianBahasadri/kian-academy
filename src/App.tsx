@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowUpRight, CircleHelp, Github, Library, Moon, NotebookPen, Search, Sun, X } from 'lucide-react';
 import { practiceFormats, resourceFormats, resourceTiers } from './model';
-import { library, repositoryUrl } from './library';
+import { library } from './library';
 import { Select } from './components/ui';
 import { PracticeDetails, ResourceDetails } from './components/Details';
 import { CollectionInfo } from './components/CollectionInfo';
@@ -14,18 +14,18 @@ import { createTableView } from './table';
 import type { ColumnFilter, TableView } from './table';
 import type { TableViewUpdate } from './components/CollectionTable';
 
-type Page = CollectionPage;
 type Filters = { search: string; status: string; subject: string; format: string; tier: string; resource: string };
 type Modal = { type: 'resource' | 'practice'; id: string } | { type: 'info' | 'shortcuts' } | { type: 'commands'; mode: CommandMode } | null;
+const repositoryUrl = 'https://github.com/KianBahasadri/kian-academy';
 const emptyFilters = (): Filters => ({ search: '', status: 'all', subject: 'all', format: 'all', tier: 'all', resource: 'all' });
-const currentPage = (): Page => window.location.hash.startsWith('#/practice') ? 'practice' : 'resources';
+const currentPage = (): CollectionPage => window.location.hash.startsWith('#/practice') ? 'practice' : 'resources';
 
 export default function App() {
-  const [page, setPage] = useState<Page>(currentPage);
-  const [allFilters, setAllFilters] = useState<Record<Page, Filters>>({ resources: emptyFilters(), practice: emptyFilters() });
+  const [page, setPage] = useState(currentPage);
+  const [allFilters, setAllFilters] = useState<Record<CollectionPage, Filters>>(() => ({ resources: emptyFilters(), practice: emptyFilters() }));
   const [modal, setModal] = useState<Modal>(null);
   const [theme, setTheme] = useState('dark');
-  const [tableViews, setTableViews] = useState<Record<Page, TableView>>(() => ({ resources: createTableView(resourceColumns, defaultResourceColumns), practice: createTableView(practiceColumns, defaultPracticeColumns) }));
+  const [tableViews, setTableViews] = useState<Record<CollectionPage, TableView>>(() => ({ resources: createTableView(resourceColumns, defaultResourceColumns), practice: createTableView(practiceColumns, defaultPracticeColumns) }));
   const model = useMemo(() => collectionModel(library), []);
   const practiceDefinition = useMemo(() => practiceColumns.map(column => column.key === 'resource' ? { ...column, choices: [{ value: 'independent', label: 'Independent' }, ...library.resources.map(resource => ({ value: resource.id, label: resource.title }))] } : column), []);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -135,16 +135,15 @@ export default function App() {
         onOpen={item => setModal({ type: 'creator' in item ? 'resource' : 'practice', id: item.id })}
         renderCell={(item, column) => renderCollectionCell(item, column, library, viewPractice, id => setModal({ type: 'resource', id }))}
         emptyTitle={isResources ? 'No resources published yet' : 'No practice published yet'} emptyDescription={isResources ? 'Books, playlists, and courses will appear here.' : 'Published essays, videos, and projects will appear here.'}
-        toolbar={<>
+        toolbar={
           <div className="search-field"><Search size={16} aria-hidden="true" /><input ref={searchRef} type="search" aria-label={isResources ? 'Search resources' : 'Search practice'} placeholder={isResources ? 'Search resources…' : 'Search published work…'} value={filters.search} onChange={event => updateFilters({ search: event.target.value })} />{filters.search && <button type="button" className="clear-search" aria-label="Clear search" onClick={() => { updateFilters({ search: '' }); searchRef.current?.focus(); }}><X size={13} aria-hidden="true" /></button>}</div>
-
-        </>}
+        }
         quickFilterCount={['subject', 'format', 'tier', 'resource'].filter(key => filters[key as keyof Filters] !== 'all').length}
         quickFilters={showAll => <>
-          {(showAll || filters.subject !== 'all') && <label>{isResources ? 'Subjects' : 'Subject'}<Select label={isResources ? 'Filter by subjects' : 'Filter by subject'} mode="list-only" value={filters.subject} onChange={subject => updateFilters({ subject })} options={[{ value: 'all', label: 'All subjects' }, ...subjectOptions.map(value => ({ value, label: value }))]} /></label>}
-          {(showAll || filters.format !== 'all') && <label>Format<Select label="Filter by format" mode="list-only" value={filters.format} onChange={format => updateFilters({ format })} options={[{ value: 'all', label: 'All formats' }, ...(isResources ? resourceFormats : practiceFormats).map(value => ({ value, label: value }))]} /></label>}
-          {isResources && (showAll || filters.tier !== 'all') && <label>Tier<Select label="Filter by tier" mode="list-only" value={filters.tier} onChange={tier => updateFilters({ tier })} options={[{ value: 'all', label: 'All tiers' }, ...resourceTiers.map(tier => ({ value: String(tier.value), label: `Tier ${tier.value}` }))]} /></label>}
-          {!isResources && library.practice.length > 0 && (showAll || filters.resource !== 'all') && <label>Related resource<Select label="Filter by resource" mode="list-only" value={filters.resource} onChange={resource => updateFilters({ resource })} className="resource-filter" options={[{ value: 'all', label: 'All resources' }, { value: 'independent', label: 'Independent practice' }, ...library.resources.map(resource => ({ value: resource.id, label: resource.title }))]} /></label>}
+          {(showAll || filters.subject !== 'all') && <label>{isResources ? 'Subjects' : 'Subject'}<Select label={isResources ? 'Filter by subjects' : 'Filter by subject'} value={filters.subject} onChange={subject => updateFilters({ subject })} options={[{ value: 'all', label: 'All subjects' }, ...subjectOptions.map(value => ({ value, label: value }))]} /></label>}
+          {(showAll || filters.format !== 'all') && <label>Format<Select label="Filter by format" value={filters.format} onChange={format => updateFilters({ format })} options={[{ value: 'all', label: 'All formats' }, ...(isResources ? resourceFormats : practiceFormats).map(value => ({ value, label: value }))]} /></label>}
+          {isResources && (showAll || filters.tier !== 'all') && <label>Tier<Select label="Filter by tier" value={filters.tier} onChange={tier => updateFilters({ tier })} options={[{ value: 'all', label: 'All tiers' }, ...resourceTiers.map(tier => ({ value: String(tier.value), label: `Tier ${tier.value}` }))]} /></label>}
+          {!isResources && library.practice.length > 0 && (showAll || filters.resource !== 'all') && <label>Related resource<Select label="Filter by resource" value={filters.resource} onChange={resource => updateFilters({ resource })} className="resource-filter" options={[{ value: 'all', label: 'All resources' }, { value: 'independent', label: 'Independent practice' }, ...library.resources.map(resource => ({ value: resource.id, label: resource.title }))]} /></label>}
         </>}
         notice={filters.resource !== 'all' && !isResources && <div className="active-filter"><span>Related to <strong>{filters.resource === 'independent' ? 'Independent practice' : resourceById.get(filters.resource)?.title}</strong></span><button type="button" className="icon-button" aria-label="Clear resource filter" onClick={() => updateFilters({ resource: 'all' })}><X size={14} /></button></div>} />
     </main>

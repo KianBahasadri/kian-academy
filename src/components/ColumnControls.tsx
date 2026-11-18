@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Columns3, EyeOff, ListOrdered, RotateCcw } from 'lucide-react';
+import { numberFilterLabels } from '../table';
 import type { ColumnFilter, ColumnSort, FilterChoice, TableColumn } from '../table';
 import { Select } from './ui';
 import { TablePopover } from './TablePopover';
 
 type ColumnOptionsProps = { columns: TableColumn[]; selected: string[]; onVisibility: (key: string, visible: boolean) => void; onReset: () => void };
+const numberFilterOptions = Object.entries(numberFilterLabels).map(([value, label]) => ({ value, label }));
 
 function ColumnOptions({ columns, selected, onVisibility, onReset }: ColumnOptionsProps) {
   return <>
@@ -69,22 +71,21 @@ function ColumnFilterForm({ column, choices, filter, onChange }: { column: Table
   const [operator, setOperator] = useState(filter?.kind === 'number' ? filter.operator : 'equals');
   const [numberValid, setNumberValid] = useState(true);
   const included = filter?.kind === 'choice' ? filter.values : [];
-  const excluded = filter?.kind === 'choice' ? filter.excludedValues ?? [] : [];
+  const excluded = filter?.kind === 'choice' ? filter.excludedValues : [];
   const changeNumber = (next: string, condition: typeof operator, valid: boolean) => {
     setValue(next); setOperator(condition); setNumberValid(valid);
-    if (condition === 'unknown') onChange({ kind: 'number', operator: condition, value: 0 });
-    else if (valid) onChange(next !== '' ? { kind: 'number', operator: condition, value: Number(next) } : undefined);
+    if (valid) onChange(next !== '' ? { kind: 'number', operator: condition, value: Number(next) } : undefined);
   };
   const changeChoices = (values: string[], excludedValues: string[]) => onChange(values.length || excludedValues.length ? { kind: 'choice', values, excludedValues } : undefined);
   return <form ref={form} className="column-filter-form" aria-label={`Filter ${column.title}`} onSubmit={event => event.preventDefault()}>
-    {column.kind === 'number' ? <>
-      <label>Condition<Select label={`${column.title} condition`} mode="list-only" value={operator} onChange={next => changeNumber(value, next as typeof operator, numberValid)} options={[{ value: 'equals', label: 'Equals' }, { value: 'atLeast', label: 'At least' }, { value: 'atMost', label: 'At most' }, ...(column.number?.unknown ? [{ value: 'unknown', label: 'Unknown' }] : [])]} /></label>
-      {operator !== 'unknown' && <label>{column.title}<input aria-label={`Filter ${column.title.toLowerCase()}`} aria-invalid={!numberValid || undefined} type="number" min={column.number?.min} max={column.number?.max} step={column.number?.step ?? 1} value={value} onChange={event => changeNumber(event.target.value, operator, event.target.validity.valid)} /></label>}
+    {column.number ? <>
+      <label>Condition<Select label={`${column.title} condition`} value={operator} onChange={next => changeNumber(value, next as typeof operator, numberValid)} options={numberFilterOptions} /></label>
+      <label>{column.title}<input aria-label={`Filter ${column.title.toLowerCase()}`} aria-invalid={!numberValid || undefined} type="number" min={column.number.min} max={column.number.max} value={value} onChange={event => changeNumber(event.target.value, operator, event.target.validity.valid)} /></label>
     </> : choices ? <fieldset className="column-filter-choices" aria-label={`${column.title} filter values`}>
       <legend>Filter</legend><div className="column-filter-sides" aria-hidden="true"><span>Include</span><span>Exclude</span></div>
       <div className="column-filter-options">{choices.map(choice => <div className="column-filter-option" key={choice.value}>
         <label><input type="checkbox" aria-label={`Include ${choice.label}`} checked={included.includes(choice.value)} onChange={event => changeChoices(event.target.checked ? [...included, choice.value] : included.filter(value => value !== choice.value), excluded.filter(value => value !== choice.value))} /><span>{choice.label}</span></label>
-        <label className="column-filter-exclude" title={`Exclude ${choice.label}`}><input type="checkbox" aria-label={`Exclude ${choice.label}`} checked={excluded.includes(choice.value)} onChange={event => changeChoices(included.filter(value => value !== choice.value), event.target.checked ? [...excluded, choice.value] : excluded.filter(value => value !== choice.value))} /></label>
+        <label title={`Exclude ${choice.label}`}><input type="checkbox" aria-label={`Exclude ${choice.label}`} checked={excluded.includes(choice.value)} onChange={event => changeChoices(included.filter(value => value !== choice.value), event.target.checked ? [...excluded, choice.value] : excluded.filter(value => value !== choice.value))} /></label>
       </div>)}</div>
     </fieldset> : <label>Contains<input aria-label={`${column.title} contains`} value={value} onChange={event => { setValue(event.target.value); onChange(event.target.value.trim() ? { kind: 'text', value: event.target.value.trim() } : undefined); }} /></label>}
     <div className="column-filter-actions"><button type="button" className="button quiet" disabled={!filter && !value} onClick={() => { form.current?.querySelector<HTMLElement>('input, select')?.focus({ preventScroll: true }); setValue(''); setOperator('equals'); setNumberValid(true); onChange(); }}>Clear filter</button></div>

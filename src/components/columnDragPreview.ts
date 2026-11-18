@@ -19,21 +19,18 @@ export function createColumnDragPreview(grid: HTMLDivElement, columns: DragColum
   for (const [index, column] of columns.entries()) {
     const group = document.createElement('div');
     group.className = 'column-drag-preview';
-    group.dataset.columnKey = column.key;
     group.style.width = `${column.width}px`;
     group.style.height = `${height}px`;
     if (column.key === source) group.dataset.lifted = 'true';
     const copyRows = (originals: HTMLTableRowElement[], heading: boolean) => {
       if (!originals.length) return;
       const copy = document.createElement('table');
-      copy.className = `collection-table column-drag-${heading ? 'heading' : 'body'}`;
+      copy.className = heading ? 'collection-table column-drag-heading' : 'collection-table';
       copy.style.top = `${originals[0].cells[index].getBoundingClientRect().top - bounds.top - grid.clientTop}px`;
       const section = heading ? copy.createTHead() : copy.createTBody();
       for (const original of originals) {
         const cell = original.cells[index].cloneNode(true) as HTMLTableCellElement;
         cell.style.height = `${original.cells[index].getBoundingClientRect().height}px`;
-        cell.removeAttribute('data-dragging');
-        cell.removeAttribute('data-drop-edge');
         cell.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
         section.insertRow().append(cell);
       }

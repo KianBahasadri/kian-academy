@@ -2,12 +2,11 @@ import { useEffect, useLayoutEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
-export function TablePopover({ anchor, point, label, role = 'group', className = '', onClose, children }: {
+export function TablePopover({ anchor, point, label, className, onClose, children }: {
   anchor: HTMLElement;
   point?: { x: number; y: number };
   label: string;
-  role?: 'group' | 'menu';
-  className?: string;
+  className: string;
   onClose: () => void;
   children: ReactNode;
 }) {
@@ -60,7 +59,7 @@ export function TablePopover({ anchor, point, label, role = 'group', className =
   }, [anchor]);
 
   // Label clicks need a focusable ancestor until the browser focuses the input.
-  return createPortal(<div ref={panel} tabIndex={-1} className={`table-popover ${className}`} role={role} aria-label={label} onBlur={event => {
+  return createPortal(<div ref={panel} tabIndex={-1} className={`table-popover ${className}`} role="group" aria-label={label} onBlur={event => {
     if (!event.currentTarget.contains(event.relatedTarget) && event.relatedTarget !== anchor) close.current();
   }} onKeyDown={event => {
     const menu = (event.target as HTMLElement).closest<HTMLElement>('[role="menu"]');

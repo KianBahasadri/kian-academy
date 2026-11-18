@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "npm run validate:data && tsc --noEmit && vite build",
+    "build": "npm run validate:data && tsc && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test": "playwright test",
-    "validate:data": "node --experimental-strip-types scripts/validate-data.mjs"
+    "validate:data": "node scripts/validate-data.mjs"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.3.0",
@@ -25,8 +25,5 @@
     "@vitejs/plugin-react": "^6.1.2",
     "typescript": "^5.9.3",
     "vite": "^8.3.4"
-  },
-  "allowScripts": {
-    "esbuild": true
   }
 }

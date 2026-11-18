@@ -4,8 +4,7 @@ import { projectColumnOrder } from '../table';
 import type { ColumnDropTarget } from '../table';
 import { columnSlideDuration, createColumnDragPreview } from './columnDragPreview';
 
-// The real table owns data, focus, and scrolling. Drag previews and target markers
-// stay outside React so crossing a column never renders the entire collection.
+// Keep the drag preview outside React so crossing a column does not redraw the table.
 export function useColumnDrag(container: RefObject<HTMLDivElement | null>, onDrop: (key: string, target: ColumnDropTarget) => void, onStart: () => void, onLongPress: (key: string) => void) {
   const drop = useRef(onDrop); drop.current = onDrop;
   const start = useRef(onStart); start.current = onStart;
@@ -25,8 +24,9 @@ export function useColumnDrag(container: RefObject<HTMLDivElement | null>, onDro
     const grabOffset = startX - element.getBoundingClientRect().left;
     const initialScrollTop = grid.scrollTop;
     const pinned = getComputedStyle(grid.querySelector('th')!).left === '0px';
-    const headers = new Map([...grid.querySelectorAll<HTMLTableCellElement>('th[data-column-key]')].map(cell => [cell.dataset.columnKey!, cell]));
-    const columns = [...headers].map(([key, cell]) => ({ key, width: cell.getBoundingClientRect().width }));
+    const columns = [...grid.querySelectorAll<HTMLTableCellElement>('th[data-column-key]')].map(cell => ({
+      key: cell.dataset.columnKey!, width: cell.getBoundingClientRect().width,
+    }));
     const original = columns.map(column => column.key);
     const originalIndex = original.indexOf(key);
     let order = original;
@@ -51,12 +51,7 @@ export function useColumnDrag(container: RefObject<HTMLDivElement | null>, onDro
         order = pinned && grid.scrollLeft > 0 && overPinnedStart ? [key, ...order.filter(column => column !== key)] : projectColumnOrder(columns, order, key, left + grid.scrollLeft);
       } else order = original;
       const index = order.indexOf(key);
-      const next: ColumnDropTarget | null = index === originalIndex ? null : { key: original[index], edge: index < originalIndex ? 'before' : 'after' };
-      if (next?.key !== destination?.key || next?.edge !== destination?.edge) {
-        if (destination) delete headers.get(destination.key)!.dataset.dropEdge;
-        destination = next;
-        if (next) headers.get(next.key)!.dataset.dropEdge = next.edge;
-      }
+      destination = index === originalIndex ? null : { key: original[index], edge: index < originalIndex ? 'before' : 'after' };
       preview?.paint(order, grid.scrollLeft, pinned, left);
     };
     const tick = (time: number) => {
@@ -86,16 +81,11 @@ export function useColumnDrag(container: RefObject<HTMLDivElement | null>, onDro
       element.removeEventListener('lostpointercapture', lostCapture);
       if (element.hasPointerCapture(pointerId)) element.releasePointerCapture(pointerId);
     };
-    const clearMarkers = () => {
-      delete grid.dataset.dragging;
-      delete element.dataset.dragging;
-      if (destination) delete headers.get(destination.key)!.dataset.dropEdge;
-    };
     const dispose = () => {
-      stopInput(); clearMarkers(); clearTimeout(settling); preview?.remove(); cleanup.current = null;
+      stopInput(); delete grid.dataset.dragging; clearTimeout(settling); preview?.remove(); cleanup.current = null;
     };
     const end = (commit: boolean, immediate = false) => {
-      stopInput(); clearMarkers();
+      stopInput(); delete grid.dataset.dragging;
       if (active) {
         preview?.settle(commit ? order : original, grid.scrollLeft, pinned);
         if (commit && destination) drop.current(key, destination);
@@ -113,7 +103,6 @@ export function useColumnDrag(container: RefObject<HTMLDivElement | null>, onDro
         element.setPointerCapture(pointerId);
         start.current();
         grid.dataset.dragging = key;
-        element.dataset.dragging = 'true';
         preview = createColumnDragPreview(grid, columns, key);
         preview.paint(original, grid.scrollLeft, pinned, startX - grid.getBoundingClientRect().left - grabOffset);
         frame = requestAnimationFrame(tick);

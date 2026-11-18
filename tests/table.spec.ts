@@ -23,7 +23,7 @@ const fixture: Library = {
 };
 
 async function load(page: Page, library = fixture) {
-  await page.route('**/src/library.ts', route => route.fulfill({ contentType: 'application/javascript', body: `export const library = ${JSON.stringify(library)}; export const repositoryUrl = 'https://github.com/KianBahasadri/kian-academy';` }));
+  await page.route('**/src/library.ts', route => route.fulfill({ contentType: 'application/javascript', body: `export const library = ${JSON.stringify(library)};` }));
   await page.goto('/');
 }
 const grid = (page: Page) => page.getByRole('region', { name: 'Resources table', exact: true });

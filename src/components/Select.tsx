@@ -2,15 +2,15 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown } from 'lucide-react';
 
-export interface SelectOption { value: string; label: string }
+interface SelectOption { value: string; label: string }
 interface SelectProps {
-  label: string; value: string; options: readonly SelectOption[]; mode: 'list-only';
-  onChange: (value: string) => void; className?: string; name?: string;
+  label: string; value: string; options: readonly SelectOption[];
+  onChange: (value: string) => void; className?: string;
 }
 const normalize = (text: string) => text.trim().toLocaleLowerCase();
 
 // Editable, list-only combobox following Grakata's design-guide implementation.
-export function Select({ label, value, options, mode, onChange, className = '', name = label }: SelectProps) {
+export function Select({ label, value, options, onChange, className = '' }: SelectProps) {
   const id = useId();
   const input = useRef<HTMLInputElement>(null), menu = useRef<HTMLUListElement>(null);
   const [open, setOpen] = useState(false), [query, setQuery] = useState<string | null>(null), [active, setActive] = useState<string | null>(null);
@@ -93,7 +93,7 @@ export function Select({ label, value, options, mode, onChange, className = '', 
     return () => { document.removeEventListener('pointerdown', outside, true); window.removeEventListener('blur', settle); };
   });
 
-  return <div className={`editable-select ${className}`} style={{ width }} data-mode={mode}>
+  return <div className={`editable-select ${className}`} style={{ width }}>
     <input ref={input} type="text" className="editable-select-input" role="combobox" aria-label={label} aria-autocomplete="list" aria-haspopup="listbox" aria-expanded={open} aria-controls={open ? `${id}-list` : undefined} aria-activedescendant={open && activeOption ? `${id}-option-${activeOption.index}` : undefined}
       autoComplete="off" spellCheck={false} value={text} onChange={event => { setQuery(event.target.value); setActive(null); setOpen(true); }}
       onClick={() => { if (!open) { show(); input.current?.select(); } }} onBlur={settle}
@@ -111,7 +111,6 @@ export function Select({ label, value, options, mode, onChange, className = '', 
         } else if (event.key === 'Tab') settle();
       }} />
     <ChevronDown size={14} aria-hidden="true" focusable="false" />
-    <input type="hidden" name={name} value={value} />
     <span className="sr-only" aria-live="polite">{open ? `${matching.length} ${matching.length === 1 ? 'option' : 'options'} available` : ''}</span>
     {open && createPortal(<ul ref={menu} id={`${id}-list`} className="editable-select-menu" role="listbox" aria-label={label} onMouseDown={event => event.preventDefault()}>
       {matching.map(option => <li key={option.value} id={`${id}-option-${option.index}`} className="editable-select-option" role="option" aria-selected={option.value === value} data-active={option.value === activeOption?.value || undefined}

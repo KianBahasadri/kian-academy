@@ -18,10 +18,10 @@ export const resourceColumns: TableColumn[] = [
   { key: 'creator', title: 'Creator', wrap: true, width: 200 },
   { key: 'format', title: 'Format', choices: resourceFormats.map(value => ({ value, label: value })), width: 130 },
   { key: 'subjects', title: 'Subjects', choices: 'values', wrap: true, width: 180 },
-  { key: 'tier', title: 'Tier', kind: 'number', number: { min: 1, max: 5 }, width: 110 },
-  { key: 'progress', title: 'Progress', kind: 'number', number: { min: 0, max: 100 }, minWidth: 156, width: 180 },
+  { key: 'tier', title: 'Tier', number: { min: 1, max: 5 }, width: 110 },
+  { key: 'progress', title: 'Progress', number: { min: 0, max: 100 }, minWidth: 156, width: 180 },
   { key: 'status', title: 'Status', choices: ['prerequisites', 'planned', 'learning', 'completed'].map(value => ({ value, label: statusLabels[value] })), width: 150 },
-  { key: 'practice', title: 'Practice', kind: 'number', number: { min: 0, max: Number.MAX_SAFE_INTEGER }, width: 130 },
+  { key: 'practice', title: 'Practice', number: { min: 0, max: Number.MAX_SAFE_INTEGER }, width: 130 },
   { key: 'notes', title: 'Notes', wrap: true, width: 260 },
   { key: 'description', title: 'Description', wrap: true, width: 300 },
   ...dates, website,
@@ -32,7 +32,7 @@ export const practiceColumns: TableColumn[] = [
   { key: 'subject', title: 'Subject', choices: 'values', width: 150 },
   { key: 'status', title: 'Status', choices: ['draft', 'finished'].map(value => ({ value, label: statusLabels[value] })), width: 130 },
   { key: 'resource', title: 'Related resource', wrap: true, width: 260 },
-  { key: 'words', title: 'Words', kind: 'number', number: { min: 0, max: Number.MAX_SAFE_INTEGER }, width: 120 },
+  { key: 'words', title: 'Words', number: { min: 0, max: Number.MAX_SAFE_INTEGER }, width: 120 },
   { key: 'content', title: 'Writing', wrap: true, width: 300 },
   ...dates, website,
 ];
@@ -88,7 +88,7 @@ export function renderCollectionCell(item: LearningItem, column: TableColumn, li
     case 'progress': return 'progress' in item ? item.status === 'prerequisites' ? <Status value={item.status} /> : item.status === 'planned' ? <span className="not-started">Not started</span> : <div className={`table-progress ${item.status === 'completed' ? 'complete' : ''}`}><div><Status value={item.status} /><span className="mono">{item.progress}%</span></div><progress aria-label={`${item.title} progress`} value={item.progress} max={100} /></div> : null;
     case 'practice': {
       const count = library.practice.filter(practice => practice.resourceId === item.id).length;
-      return count ? <button type="button" className="practice-count has-practice" aria-label={`View practice for ${item.title}`} onClick={() => onPractice(item.id)}><NotebookPen size={14} aria-hidden="true" />{count}</button> : <span className="muted">0</span>;
+      return count ? <button type="button" className="practice-count" aria-label={`View practice for ${item.title}`} onClick={() => onPractice(item.id)}><NotebookPen size={14} aria-hidden="true" />{count}</button> : <span className="muted">0</span>;
     }
     case 'resource': return 'resourceId' in item && item.resourceId ? <button type="button" className="table-resource-link" onClick={() => onResource(item.resourceId!)}>{library.resources.find(resource => resource.id === item.resourceId)!.title}</button> : <span className="muted">Independent</span>;
     case 'createdAt': case 'updatedAt': return <time dateTime={item[column.key]} title={new Date(item[column.key]).toLocaleString()}>{new Date(item[column.key]).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</time>;

@@ -38,7 +38,7 @@ export function Tier({ value }: { value: ResourceTier }) {
   return <span className="tier-label">Tier {value}</span>;
 }
 
-export function Dialog({ title, onClose, children, wide = false, drawer = false, className = '', returnFocus }: { title: string; onClose: () => void; children: ReactNode; wide?: boolean; drawer?: boolean; className?: string; returnFocus?: HTMLElement | null }) {
+export function Dialog({ title, onClose, children, drawer = false, className = '', returnFocus }: { title: string; onClose: () => void; children: ReactNode; drawer?: boolean; className?: string; returnFocus?: HTMLElement | null }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   useEffect(() => {
@@ -54,7 +54,7 @@ export function Dialog({ title, onClose, children, wide = false, drawer = false,
       if (previous instanceof HTMLElement && previous.isConnected) previous.focus({ preventScroll: true });
     };
   }, []);
-  return <dialog ref={ref} className={`dialog${wide ? ' wide' : ''}${drawer ? ' drawer' : ''} ${className}`} aria-labelledby={titleId} onCancel={event => { event.preventDefault(); onClose(); }} onClick={event => { if (event.target === event.currentTarget) { const rect = event.currentTarget.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) onClose(); } }}>
+  return <dialog ref={ref} className={`dialog${drawer ? ' drawer' : ''} ${className}`} aria-labelledby={titleId} onCancel={event => { event.preventDefault(); onClose(); }} onClick={event => { if (event.target === event.currentTarget) { const rect = event.currentTarget.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) onClose(); } }}>
     <div className="dialog-header"><h2 id={titleId}>{title}</h2><button type="button" className="icon-button" aria-label="Close dialog" title="Close dialog" onClick={onClose}><X size={19} aria-hidden="true" focusable="false" /></button></div>
     {children}
   </dialog>;
