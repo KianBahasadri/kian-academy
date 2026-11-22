@@ -1,6 +1,6 @@
 # Interface
 
-The React app opens Resources at `#/resources` and Practice at `#/practice`. Opening the site without a hash shows Resources. The app starts in dark mode and the theme button switches between dark and light. Search, filters, column preferences, and sort priorities are held in memory, with independent collection settings. Reloading resets the view settings. [App](../src/App.tsx)
+The React app opens Resources at `#/resources` and Practice at `#/practice`. Opening the site without a hash shows Resources. The theme starts from the browser's color-scheme preference and follows live preference changes until the theme button, Alt+Shift+T, or the Toggle theme command selects a theme for the rest of the page's lifetime; reloading returns to the current system preference. Search, filters, column preferences, and sort priorities are held in memory, with independent collection settings. Reloading resets the view settings. [App](../src/App.tsx)
 
 ## Browsing
 

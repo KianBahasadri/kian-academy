@@ -16,6 +16,7 @@ import type { TableViewUpdate } from './components/CollectionTable';
 
 type Filters = { search: string; status: string; subject: string; format: string; tier: string; resource: string };
 type Modal = { type: 'resource' | 'practice'; id: string } | { type: 'info' | 'shortcuts' } | { type: 'commands'; mode: CommandMode } | null;
+type Theme = 'dark' | 'light';
 const repositoryUrl = 'https://github.com/KianBahasadri/kian-academy';
 const emptyFilters = (): Filters => ({ search: '', status: 'all', subject: 'all', format: 'all', tier: 'all', resource: 'all' });
 const currentPage = (): CollectionPage => window.location.hash.startsWith('#/practice') ? 'practice' : 'resources';
@@ -24,7 +25,8 @@ export default function App() {
   const [page, setPage] = useState(currentPage);
   const [allFilters, setAllFilters] = useState<Record<CollectionPage, Filters>>(() => ({ resources: emptyFilters(), practice: emptyFilters() }));
   const [modal, setModal] = useState<Modal>(null);
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState<Theme>(() => document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
+  const manualTheme = useRef(false);
   const [tableViews, setTableViews] = useState<Record<CollectionPage, TableView>>(() => ({ resources: createTableView(resourceColumns, defaultResourceColumns), practice: createTableView(practiceColumns, defaultPracticeColumns) }));
   const model = useMemo(() => collectionModel(library), []);
   const practiceDefinition = useMemo(() => practiceColumns.map(column => column.key === 'resource' ? { ...column, choices: [{ value: 'independent', label: 'Independent' }, ...library.resources.map(resource => ({ value: resource.id, label: resource.title }))] } : column), []);
@@ -54,11 +56,22 @@ export default function App() {
     const quickKey = key === 'subjects' ? 'subject' : key;
     if (['status', 'subject', 'format', 'tier', 'resource'].includes(quickKey)) setAllFilters(current => ({ ...current, [page]: { ...current[page], [quickKey]: 'all' } }));
   };
+  const toggleTheme = () => {
+    manualTheme.current = true;
+    setTheme(current => current === 'dark' ? 'light' : 'dark');
+  };
 
   useEffect(() => {
     const sync = () => { setPage(currentPage()); setModal(null); };
     window.addEventListener('hashchange', sync);
     return () => window.removeEventListener('hashchange', sync);
+  }, []);
+  useEffect(() => {
+    const preference = window.matchMedia('(prefers-color-scheme: dark)');
+    const follow = () => { if (!manualTheme.current) setTheme(preference.matches ? 'dark' : 'light'); };
+    preference.addEventListener('change', follow);
+    follow();
+    return () => preference.removeEventListener('change', follow);
   }, []);
   useEffect(() => { document.title = `Kian Academy · ${isResources ? 'Resources' : 'Practice'}`; }, [isResources]);
   useEffect(() => {
@@ -77,7 +90,7 @@ export default function App() {
         if (!event.shiftKey && event.code === 'KeyJ') { event.preventDefault(); setModal({ type: 'commands', mode: 'pages' }); }
         else if (!event.shiftKey && (event.code === 'Digit1' || event.code === 'Digit2')) {
           event.preventDefault(); setModal(null); window.location.hash = event.code === 'Digit1' ? '/resources' : '/practice';
-        } else if (event.shiftKey && event.code === 'KeyT') { event.preventDefault(); setModal(null); setTheme(current => current === 'dark' ? 'light' : 'dark'); }
+        } else if (event.shiftKey && event.code === 'KeyT') { event.preventDefault(); setModal(null); toggleTheme(); }
         else if (!event.shiftKey && event.code === 'Slash') { event.preventDefault(); setModal({ type: 'shortcuts' }); }
       } else if (!modal && event.key === '/' && !event.ctrlKey && !event.metaKey) { event.preventDefault(); searchRef.current?.focus(); }
     }
@@ -104,7 +117,7 @@ export default function App() {
   const statuses = isResources ? [['all', 'All resources'], ['learning', 'In progress'], ['planned', 'To learn'], ['prerequisites', 'Prerequisites needed'], ['completed', 'Completed']] : [['all', 'All practice'], ['draft', 'Drafts'], ['finished', 'Finished']];
   const commands: Command[] = [
     { label: 'Search this collection', keys: ['/'], run: () => searchRef.current?.focus() },
-    { label: 'Toggle theme', keys: ['Alt', 'Shift', 'T'], run: () => setTheme(current => current === 'dark' ? 'light' : 'dark') },
+    { label: 'Toggle theme', keys: ['Alt', 'Shift', 'T'], run: toggleTheme },
     { label: 'Keyboard shortcuts', keys: ['Alt', '/'], run: () => setModal({ type: 'shortcuts' }) },
   ];
   const destinations: Command[] = [
@@ -123,7 +136,7 @@ export default function App() {
     <header className="topbar">
       <a href="#/resources" className="brand" aria-label="Kian Academy home"><svg className="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M8 7v18M24 7 12 18m5-5 8 12" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" /></svg><span>Kian<span className="brand-secondary"> Academy</span></span></a>
       <nav aria-label="Main navigation" className="main-nav"><a href="#/resources" aria-current={isResources ? 'page' : undefined}><Library size={17} /><span>Resources</span></a><a href="#/practice" aria-current={!isResources ? 'page' : undefined}><NotebookPen size={17} /><span>Practice</span>{library.practice.length > 0 && <span className="nav-count">{library.practice.length}</span>}</a></nav>
-      <div className="topbar-utilities"><button ref={launcherRef} type="button" className="search-launcher" title="Open search and commands" aria-label="Open search and commands" aria-keyshortcuts="Control+k Meta+k Control+Space" aria-haspopup="dialog" aria-expanded={modal?.type === 'commands'} onClick={() => setModal({ type: 'commands', mode: 'commands' })}><Search size={15} aria-hidden="true" focusable="false" /></button><button type="button" className="icon-button theme-toggle" aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</button><span className="utility-divider" /><a className="source-button" aria-label="View source" href={repositoryUrl} target="_blank" rel="noopener noreferrer"><Github size={16} /><span>View source</span><ArrowUpRight size={13} /></a></div>
+      <div className="topbar-utilities"><button ref={launcherRef} type="button" className="search-launcher" title="Open search and commands" aria-label="Open search and commands" aria-keyshortcuts="Control+k Meta+k Control+Space" aria-haspopup="dialog" aria-expanded={modal?.type === 'commands'} onClick={() => setModal({ type: 'commands', mode: 'commands' })}><Search size={15} aria-hidden="true" focusable="false" /></button><button type="button" className="icon-button theme-toggle" aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`} onClick={() => toggleTheme()}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</button><span className="utility-divider" /><a className="source-button" aria-label="View source" href={repositoryUrl} target="_blank" rel="noopener noreferrer"><Github size={16} /><span>View source</span><ArrowUpRight size={13} /></a></div>
     </header>
     <main id="main-content" className={`${page}-page`} tabIndex={-1}>
       <h1 className="sr-only">{isResources ? 'Learning resources' : 'Practice'}</h1>

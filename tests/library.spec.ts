@@ -30,6 +30,24 @@ async function useFixture(page: Page, read: () => Library = () => fixture) {
   await page.goto('/');
 }
 
+const themeTokens = {
+  dark: { canvas: 'rgb(8, 11, 13)', colorScheme: 'dark', themeColor: '#080b0d', label: 'Switch to light theme', icon: 'sun' },
+  light: { canvas: 'rgb(236, 239, 236)', colorScheme: 'light', themeColor: '#ecefec', label: 'Switch to dark theme', icon: 'moon' },
+};
+
+async function expectTheme(page: Page, theme: keyof typeof themeTokens) {
+  const expected = themeTokens[theme];
+  await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', expected.themeColor);
+  const toggle = page.getByRole('button', { name: expected.label, exact: true });
+  await expect(toggle).toBeVisible();
+  await expect(toggle.locator(`svg.lucide-${expected.icon}`)).toHaveCount(1);
+  expect(await page.evaluate(() => {
+    const style = getComputedStyle(document.documentElement);
+    return { canvas: style.backgroundColor, colorScheme: style.colorScheme };
+  })).toEqual({ canvas: expected.canvas, colorScheme: expected.colorScheme });
+}
+
 test('loads committed data using only local static assets and no browser storage', async ({ page, baseURL }) => {
   const siteOrigin = new URL(baseURL!).origin;
   const errors: string[] = [], unexpectedRequests: string[] = [];
@@ -50,6 +68,72 @@ test('loads committed data using only local static assets and no browser storage
   if (published.practice.length) await expect(page.locator('tbody tr')).toHaveCount(published.practice.length);
   else await expect(page.getByRole('heading', { name: 'No practice published yet' })).toBeVisible();
   expect(errors).toEqual([]); expect(unexpectedRequests).toEqual([]);
+});
+
+test('theme starts from the system preference and follows live changes before a manual choice', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await useFixture(page);
+  await expectTheme(page, 'dark');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await expectTheme(page, 'light');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await expectTheme(page, 'dark');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.reload();
+  await expectTheme(page, 'light');
+});
+
+test('manual theme choices stop system updates across controls and navigation until reload', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await useFixture(page);
+  await expectTheme(page, 'dark');
+
+  await page.getByRole('button', { name: 'Switch to light theme', exact: true }).click();
+  await expectTheme(page, 'light');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await expectTheme(page, 'light');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await expectTheme(page, 'light');
+
+  await page.keyboard.press('Alt+Shift+t');
+  await expectTheme(page, 'dark');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await expectTheme(page, 'dark');
+
+  await page.getByRole('button', { name: 'Open search and commands', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Search commands', exact: true }).fill('theme');
+  await page.keyboard.press('Enter');
+  await expectTheme(page, 'light');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await expectTheme(page, 'light');
+
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: /^Practice/ }).click();
+  await expectTheme(page, 'light');
+  await page.getByRole('link', { name: 'Resources', exact: true }).click();
+  await expectTheme(page, 'light');
+
+  await page.keyboard.press('Alt+Shift+t');
+  await expectTheme(page, 'dark');
+  expect(await page.evaluate(() => [localStorage.length, sessionStorage.length, document.cookie])).toEqual([0, 0, '']);
+  await page.reload();
+  await expectTheme(page, 'dark');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await expectTheme(page, 'light');
+});
+
+test('the head applies the startup theme before the application module runs', async ({ page }) => {
+  let release!: () => void;
+  const blocked = new Promise<void>(resolve => { release = resolve; });
+  await page.route(/\/src\/main\.tsx/, async route => { await blocked; await route.continue(); });
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/', { waitUntil: 'commit' });
+  await page.waitForSelector('meta[name="theme-color"]', { state: 'attached' });
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#ecefec');
+  await expect(page.locator('#root')).toBeEmpty();
+  release();
+  await expect(page.locator('.app-shell')).toBeVisible();
+  await expectTheme(page, 'light');
 });
 
 test('search, combined filters, sorting and status tabs find published resources', async ({ page }) => {
@@ -132,6 +216,7 @@ test('resource tiers filter and sort independently of progress and explain the f
 });
 
 test('header search filters commands and returns focus after actions and dismissal', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
   await useFixture(page);
   const launcher = page.getByRole('button', { name: 'Open search and commands', exact: true });
   await launcher.click();
@@ -169,6 +254,7 @@ test('header search filters commands and returns focus after actions and dismiss
 
 test('command navigation and shortcuts work on phones without page overflow', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 844 });
+  await page.emulateMedia({ colorScheme: 'dark' });
   await useFixture(page);
   const launcher = page.getByRole('button', { name: 'Open search and commands', exact: true });
   await expect(launcher).toBeVisible();
@@ -298,6 +384,7 @@ test('styled dropdowns search, select by keyboard, and restore unmatched input o
 
 test('dropdown lists fit phone viewports in both themes and wrap long resource labels', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 844 });
+  await page.emulateMedia({ colorScheme: 'dark' });
   const longTitle = 'A very long learning resource title with a longidentifierthatmustwrapwithinthepopup';
   await useFixture(page, () => ({ ...fixture, resources: fixture.resources.map(resource => resource.id === 'vectors' ? { ...resource, title: longTitle } : resource) }));
   await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: /^Practice/ }).click();
@@ -325,6 +412,7 @@ test('dropdown lists fit phone viewports in both themes and wrap long resource l
 
 test('phone layout, keyboard focus and transient theme work without persistence', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ colorScheme: 'dark' });
   await useFixture(page);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await page.getByRole('button', { name: 'Switch to light theme' }).click();
