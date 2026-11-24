@@ -164,6 +164,30 @@
         "pages": 338,
         "sourceUrl": "https://www.guilford.com/books/Motivational-Interviewing/Miller-Rollnick/9781462552795"
       }
+    },
+    {
+      "id": "physiology-of-sport-and-exercise-8",
+      "title": "Physiology of Sport and Exercise",
+      "creator": "W. Larry Kenney, Jack H. Wilmore, and David L. Costill",
+      "format": "Textbook",
+      "tier": 3,
+      "subjects": [
+        "Biology"
+      ],
+      "url": "https://www.vitalsource.com/products/physiology-of-sport-and-exercise-8th-edition-w-larry-kenney-v9781718217485",
+      "description": "",
+      "notes": "",
+      "status": "prerequisites",
+      "progress": 0,
+      "publication": {
+        "year": 2022,
+        "publisher": "Human Kinetics Custom Content",
+        "edition": "8th",
+        "isbn": "9781718217485",
+        "sourceUrl": "https://www.vitalsource.com/products/physiology-of-sport-and-exercise-8th-edition-w-larry-kenney-v9781718217485"
+      },
+      "createdAt": "2026-11-24T04:31:20+00:00",
+      "updatedAt": "2026-11-24T04:31:20+00:00"
     }
   ],
   "practice": []
