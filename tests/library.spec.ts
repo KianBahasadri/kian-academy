@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import type { Library } from '../src/model';
+import type { Library, Resource } from '../src/model';
 import { validateLibrary } from '../src/model';
 import { chooseOption } from './helpers';
 
@@ -14,6 +14,11 @@ const published = JSON.parse(readFileSync('data/library.json', 'utf8')) as Libra
 const date = '2026-10-26T12:00:00Z';
 const fixture: Library = {
   version: 1,
+  disciplines: {
+    Mathematics: ['Algebra', 'Geometry', 'Calculus', 'Probability'],
+    'Computer science': ['Algorithms', 'Systems', 'Theory', 'Programming languages'],
+    Writing: ['Structure', 'Style', 'Grammar', 'Rhetoric'],
+  },
   resources: [
     { id: 'vectors', title: 'Vectors and transformations', creator: 'Test author', format: 'YouTube playlist', tier: 3, subjects: ['Mathematics'], url: 'https://example.com/vectors', description: 'A visual introduction.', notes: 'Linear transformations preserve addition and scaling.', status: 'completed', progress: 100, createdAt: date, updatedAt: date },
     { id: 'python', title: 'Python basics', creator: 'Test teacher', format: 'Course', tier: 2, subjects: ['Computer science'], url: 'https://example.com/python', description: '', notes: 'Functions and small programs.', status: 'learning', progress: 40, createdAt: date, updatedAt: date },
@@ -26,7 +31,7 @@ const fixture: Library = {
 };
 
 async function useFixture(page: Page, read: () => Library = () => fixture) {
-  await page.route('**/src/library.ts', route => route.fulfill({ contentType: 'application/javascript', body: `export const library = ${JSON.stringify(read())};` }));
+  await page.route('**/src/library.ts', route => route.fulfill({ contentType: 'application/javascript', body: `export const library = ${JSON.stringify(validateLibrary(read()))};` }));
   await page.goto('/');
 }
 
@@ -156,7 +161,7 @@ test('search, combined filters, sorting and status tabs find published resources
 
 test('resources needing prerequisites are separate from resources ready to learn', async ({ page }) => {
   const data = structuredClone(fixture);
-  data.resources[2].status = 'prerequisites';
+  data.resources[2].tier = 2;
   await useFixture(page, () => data);
   await page.getByRole('button', { name: 'To learn 0', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'No matches here', exact: true })).toBeVisible();
@@ -168,17 +173,45 @@ test('resources needing prerequisites are separate from resources ready to learn
   await page.getByRole('button', { name: 'Details for Clear prose', exact: true }).click();
   await expect(page.getByRole('dialog').getByText('Prerequisites needed', { exact: true })).toBeVisible();
   await expect(page.getByRole('dialog').getByRole('progressbar')).toHaveAttribute('value', '0');
+  await expect(page.getByRole('dialog')).toContainText('Tier I overview of Writing');
+  data.resources.push(...['first', 'second'].map((id): Resource => ({
+    ...data.resources[2], id, tier: 1, overview: id === 'first', status: 'completed', progress: 100,
+  })));
+  await page.reload();
+  await page.getByRole('button', { name: 'To learn 1', exact: true }).click();
+  await page.getByRole('button', { name: 'Details for Clear prose', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('All requirements met');
 });
 
-test('prerequisite status requires zero progress and does not apply to practice', () => {
+test('readiness counts only completed resources in the discipline and target specialty', () => {
+  const target: Resource = { ...fixture.resources[2], subjects: ['Mathematics'], tier: 5, specialty: 'Topology' };
+  const completed = ([1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4] as const).map((tier, i): Resource => ({
+    ...fixture.resources[0], id: String(i), tier,
+    overview: i === 0 ? true : undefined,
+    areas: i === 2 ? ['Algebra', 'Geometry'] : i === 5 ? ['Calculus', 'Probability'] : undefined,
+    specialty: tier === 4 ? 'Topology' : undefined,
+  }));
+  const status = (resources: Resource[]) => validateLibrary({ ...fixture, practice: [], resources: [target, ...resources] }).resources[0].status;
+  expect(status(completed)).toBe('planned');
+  for (const index of [0, 2, 5, 9]) {
+    const incomplete = structuredClone(completed);
+    incomplete[index].status = 'learning'; incomplete[index].progress = 99;
+    expect(status(incomplete)).toBe('prerequisites');
+  }
+  for (const [index, patch] of [
+    [0, { overview: false }], [2, { areas: ['Algebra'] }], [5, { areas: ['Algebra', 'Geometry'] }],
+    [9, { subjects: ['Writing', 'Mathematics'] }], [9, { specialty: 'Number theory' }],
+  ] as const) {
+    expect(status(completed.map((item, i) => i === index ? { ...item, ...structuredClone(patch) } as Resource : item))).toBe('prerequisites');
+  }
+});
+
+test('invalid readiness classifications fail validation', () => {
   const data = structuredClone(fixture);
-  data.resources[2].status = 'prerequisites';
-  expect(validateLibrary(data).resources[2].status).toBe('prerequisites');
-  data.resources[2].progress = 1;
-  expect(() => validateLibrary(data)).toThrow('Invalid resources');
-  data.resources[2].progress = 0;
-  const invalidPractice = { ...data, practice: [{ ...data.practice[0], status: 'prerequisites' }] };
-  expect(() => validateLibrary(invalidPractice)).toThrow('Invalid practice');
+  for (const patch of [{ status: 'prerequisites' }, { tier: 5 }, { areas: ['Unknown'] }, { overview: true }, { subjects: ['Unknown'] }]) {
+    expect(() => validateLibrary({ ...data, resources: [{ ...data.resources[0], ...patch }, ...data.resources.slice(1)] })).toThrow();
+  }
+  expect(() => validateLibrary({ ...data, practice: [{ ...data.practice[0], status: 'prerequisites' }] })).toThrow('Invalid practice');
 });
 
 test('resource tiers filter and sort independently of progress and explain the five levels', async ({ page }) => {
@@ -208,7 +241,8 @@ test('resource tiers filter and sort independently of progress and explain the f
   await expect(page.locator('tbody tr').nth(1)).toContainText('Python basics');
   await expect(page.locator('tbody tr').nth(2)).toContainText('Vectors and transformations');
   await page.getByRole('button', { name: 'Help', exact: true }).click();
-  for (const value of ['I', 'II', 'III', 'IV', 'V']) await expect(dialog.getByText(`Tier ${value}`, { exact: true })).toBeVisible();
+  for (const value of ['I', 'II', 'III', 'IV', 'V']) await expect(dialog.getByRole('rowheader', { name: `Tier ${value}`, exact: true })).toBeVisible();
+  await expect(dialog.getByRole('row', { name: /^Tier V / })).toContainText('2 Tier I + 3 Tier II + 4 Tier III + 4 Tier IV');
   await page.keyboard.press('Escape');
   await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: /^Practice/ }).click();
   await expect(tiers).toHaveCount(0);
@@ -461,7 +495,7 @@ test('publication validation requires an integer resource tier from 1 to 5', asy
   try {
     const path = join(directory, 'library.json');
     for (const tier of [1, 2, 3, 4, 5, undefined, null, 0, 6, 1.5, '2']) {
-      const data = { ...fixture, resources: [{ ...fixture.resources[0], tier }, ...fixture.resources.slice(1)] };
+      const data = { ...fixture, resources: [{ ...fixture.resources[0], tier, specialty: tier === 5 ? 'Topology' : undefined }, ...fixture.resources.slice(1)] };
       await writeFile(path, JSON.stringify(data));
       const result = spawnSync(process.execPath, ['scripts/validate-data.mjs', path], { encoding: 'utf8' });
       if (typeof tier === 'number' && Number.isInteger(tier) && tier >= 1 && tier <= 5) {

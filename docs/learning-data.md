@@ -1,6 +1,6 @@
 # Learning data
 
-[The published library](../data/library.json) holds two collections. Resources are material Kian learns from. Practice is Kian's own work, including writing, videos, and projects. Everything in the file is public, including practice drafts. For the release process, see [Publishing](publishing.md).
+[The published library](../data/library.json) holds the discipline definitions and two collections. Resources are material Kian learns from. Practice is Kian's own work, including writing, videos, and projects. Everything in the file is public, including practice drafts. For the release process, see [Publishing](publishing.md).
 
 Use `version: 1` and keep both `resources` and `practice` as arrays. Give each entry a nonempty `id` and `title`. IDs must be unique within their collection and should remain stable across edits. Use ISO 8601 for `createdAt` and `updatedAt`. The validator requires parseable date strings.
 
@@ -26,6 +26,7 @@ Go researches the items against the current catalog and proposes metadata and cl
   "format": "Book",
   "tier": 2,
   "subjects": ["Mathematics", "Physics"],
+  "areas": ["Linear algebra"],
   "url": "https://example.com/book",
   "description": "",
   "notes": "",
@@ -54,16 +55,15 @@ Choose a format from `YouTube playlist`, `Course`, `Book`, `Textbook`, `Article`
 
 ### Readiness and progress
 
-| Status | Site label | Allowed progress |
-| --- | --- | --- |
-| `prerequisites` | Prerequisites needed | 0 |
-| `planned` | To learn | 0 |
-| `learning` | In progress | Any integer from 0 to 99 |
-| `completed` | Completed | 100 |
+Store `planned` with progress 0 for an unstarted resource, `learning` with 0–99, or `completed` with 100. Only record activity Kian reports. The site calculates **Prerequisites needed** or **To learn** for unstarted resources. It preserves published progress on started and completed resources.
 
-Use `prerequisites` while the foundations still need work and `planned` when the resource is ready to start. Record readiness from the resource's assumed knowledge, the catalog, and the available context. It is independent of the tier and of any recorded learning progress.
+The first subject is the primary discipline for both earning and using credit. The top-level `disciplines` object maps each discipline to its list of at least four distinct foundational areas. For example, a Mathematics definition might include Linear algebra, Calculus, Geometry, and Probability. Define these once per discipline. Reuse their exact names when adding resources.
 
-*The Great Psychotherapy Debate* and *Motivational Interviewing* are set aside for foundational study based on their scope and audience. [Routledge's publication record](https://www.routledge.com/the-great-psychotherapy-debate-the-evidence-for-what-makes-psychotherapy/wampold-imel/p/book/9780805857092) · [Guilford's audience guide](https://www.guilford.com/books/Motivational-Interviewing/Miller-Rollnick/9781462552795/audience)
+- Set `overview: true` only for a Tier I introduction spanning its primary discipline.
+- On Tier II and III resources, list the discipline’s foundational `areas` substantively covered. Omit the field when none apply.
+- On Tier IV, assign a `specialty` if the resource covers a specific specialty. Tier V requires the exact specialty name. Reuse the same spelling for matching resources in that discipline.
+
+Only completed entries in the target’s primary discipline count. Tier I is open. Tier II needs two Tier I completions, including a discipline overview. Tier III also needs three Tier II completions covering two distinct areas. Tier IV adds four Tier III completions and requires four distinct areas across Tiers II and III. Tier V adds four Tier IV completions in the target’s specific specialty. All lower requirements carry forward. A resource can cover multiple areas but counts only once toward its tier quota.
 
 ### Publication records
 

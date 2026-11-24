@@ -11,7 +11,7 @@ Kian Academy is Kian's public, read-only learning portfolio.
   - **Flat and explicit over clever:** Use plain functions, direct control flow, and concrete types. Do not create wrappers, factories, or interfaces that only have one implementation.
   - **No speculative extensibility:** Do not add config flags, plugin hooks, or abstraction layers for hypothetical future use cases.
 - Commit learning updates to the [published catalog](docs/learning-data.md). Keep learning resources and Kian's authored practice distinct. Never invent learning progress or authored work.
-- Determine routine resource classifications yourself using the catalog, published prerequisites, and available context. Record prerequisite readiness, learning progress, and resource tier independently.
+- Determine routine resource classifications yourself using the catalog, published prerequisites, and available context. Classify resources using the published tier rules. Derive prerequisite readiness from catalog completions and record learning progress only from Kian’s updates.
 - Use sourced, edition-specific bibliographic facts in resource panels. Do not add generated descriptions, audience commentary, study prompts, or invented notes. Show resource tiers as compact metadata tags without explanatory panel sections.
 - Keep the portfolio static and read-only. Do not add accounts, a backend, browser persistence, or visitor editing controls. Keep filters and theme state transient.
 - Preserve the Grakata-derived visual style and compact controls in `src/styles.css`. Use `~/warframe-toolkit` as a read-only reference.

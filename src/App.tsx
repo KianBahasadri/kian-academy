@@ -163,7 +163,7 @@ export default function App() {
     {modal?.type === 'commands' && <Commands key={modal.mode} commands={commands} destinations={destinations} initialMode={modal.mode} onClose={() => setModal(null)} returnFocus={launcherRef.current} />}
     {modal?.type === 'shortcuts' && <KeyboardShortcuts onClose={() => setModal(null)} returnFocus={launcherRef.current} />}
     {modal?.type === 'info' && <CollectionInfo collection={page} onClose={() => setModal(null)} />}
-    {modal?.type === 'resource' && selectedResource && <ResourceDetails key={selectedResource.id} resource={selectedResource} practice={library.practice.filter(item => item.resourceId === selectedResource.id)} onPractice={id => setModal({ type: 'practice', id })} onClose={() => setModal(null)} />}
+    {modal?.type === 'resource' && selectedResource && <ResourceDetails key={selectedResource.id} resource={selectedResource} resources={library.resources} disciplineAreas={library.disciplines[selectedResource.subjects[0]]} practice={library.practice.filter(item => item.resourceId === selectedResource.id)} onPractice={id => setModal({ type: 'practice', id })} onClose={() => setModal(null)} />}
     {modal?.type === 'practice' && selectedPractice && <PracticeDetails key={selectedPractice.id} practice={selectedPractice} resource={selectedPractice.resourceId ? resourceById.get(selectedPractice.resourceId) : undefined} onResource={() => selectedPractice.resourceId && setModal({ type: 'resource', id: selectedPractice.resourceId })} onClose={() => setModal(null)} />}
   </div>;
 }

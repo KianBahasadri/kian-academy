@@ -1,11 +1,12 @@
 import { ArrowUpRight, ChevronRight, ExternalLink, NotebookPen } from 'lucide-react';
-import { safeUrl, sourceHost, wordCount } from '../model';
+import { prerequisiteChecks, safeUrl, sourceHost, wordCount } from '../model';
 import type { Practice, Resource } from '../model';
 import { Dialog, FormatIcon, ResourceMark, Status, Subjects, Tier } from './ui';
 
 const fullDate = (value: string) => new Date(value).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
 
-export function ResourceDetails({ resource, practice, onPractice, onClose }: { resource: Resource; practice: Practice[]; onPractice: (id: string) => void; onClose: () => void }) {
+export function ResourceDetails({ resource, resources, disciplineAreas, practice, onPractice, onClose }: { resource: Resource; resources: Resource[]; disciplineAreas: string[]; practice: Practice[]; onPractice: (id: string) => void; onClose: () => void }) {
+  const checks = prerequisiteChecks(resource, resources);
   return <Dialog title="Resource details" onClose={onClose} drawer><div className="dialog-body detail-body">
     <div className="detail-identity"><ResourceMark format={resource.format} subjects={resource.subjects} large /><div className="eyebrow">{resource.format}<span>·</span><Subjects values={resource.subjects} /><span className="tier-tag"><Tier value={resource.tier} /></span></div></div>
     <h3 className="detail-title">{resource.title}</h3>{resource.creator && <p className="detail-creator">{resource.creator}</p>}
@@ -21,6 +22,18 @@ export function ResourceDetails({ resource, practice, onPractice, onClose }: { r
     {resource.description && <p className="detail-description">{resource.description}</p>}
     {safeUrl(resource.url) && <><div className="detail-actions"><a className="button primary" href={safeUrl(resource.url)} target="_blank" rel="noopener noreferrer">Open resource<ArrowUpRight size={16} /></a></div><span className="source-host"><ExternalLink size={12} />{sourceHost(resource.url)}</span></>}
     <section className="detail-section"><div className="detail-section-heading"><h3>Learning progress</h3><Status value={resource.status} /></div><div className="published-progress"><progress aria-label={`${resource.title} progress`} value={resource.progress} max={100} /><span className="mono">{resource.progress}%</span></div></section>
+    <section className="detail-section"><div className="detail-section-heading"><h3>Tier prerequisites</h3></div>
+      {checks.length ? <>
+        <p>{checks.every(check => check.count >= check.required) ? 'All requirements met' : 'Requirements remaining'} · {resource.subjects[0]}</p>
+        <dl className="unlock-counts">{checks.map(check => <div key={check.label}>
+          <dt>{check.label}</dt><dd>{Math.min(check.count, check.required)} of {check.required}</dd>
+        </div>)}</dl>
+        {resource.tier >= 3 && <p>Foundational areas in {resource.subjects[0]} include {disciplineAreas.join(', ')}.</p>}
+      </> : <p>Tier I is open immediately.</p>}
+      {resource.overview && <p>Counts as a discipline overview of {resource.subjects[0]}.</p>}
+      {resource.areas && <p>Foundational areas covered by this resource: {resource.areas.join(', ')}.</p>}
+      {resource.specialty && <p>Specialty: {resource.specialty}.</p>}
+    </section>
     {resource.notes.trim() && <section className="detail-section"><div className="detail-section-heading"><h3>Notes</h3></div><div className="practice-content">{resource.notes}</div></section>}
     <section className="detail-section"><div className="detail-section-heading"><h3>Related practice <span className="count">{practice.length}</span></h3></div>{practice.length ? <div className="related-list">{practice.map(item => <button key={item.id} type="button" onClick={() => onPractice(item.id)}><FormatIcon format={item.format} /><span>{item.title}<small>{item.format} · {item.status === 'draft' ? 'Draft' : 'Finished'}</small></span><ChevronRight size={15} /></button>)}</div> : <div className="related-empty"><NotebookPen size={23} strokeWidth={1.4} /><p>No related work published yet.</p></div>}</section>
     <div className="detail-bottom"><span>Updated <time dateTime={resource.updatedAt}>{fullDate(resource.updatedAt)}</time></span></div>

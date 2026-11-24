@@ -1,5 +1,24 @@
 {
   "version": 1,
+  "disciplines": {
+    "Biology": [
+      "Cell biology",
+      "Genetics",
+      "Evolution",
+      "Physiology",
+      "Neuroscience",
+      "Ecology"
+    ],
+    "Psychology": [
+      "Biological psychology",
+      "Cognition",
+      "Developmental psychology",
+      "Social psychology",
+      "Clinical psychology",
+      "Research methods",
+      "Emotion and motivation"
+    ]
+  },
   "resources": [
     {
       "id": "human-biology",
@@ -16,7 +35,12 @@
       "status": "planned",
       "progress": 0,
       "createdAt": "2026-10-26T22:54:29.124Z",
-      "updatedAt": "2026-10-27T10:09:29Z"
+      "updatedAt": "2026-11-24T05:11:57+00:00",
+      "areas": [
+        "Genetics",
+        "Evolution",
+        "Neuroscience"
+      ]
     },
     {
       "id": "feeling-good",
@@ -125,10 +149,10 @@
       "url": "https://www.routledge.com/The-Great-Psychotherapy-Debate-The-Evidence-for-What-Makes-Psychotherapy/Wampold-Imel/p/book/9780805857092",
       "description": "",
       "notes": "",
-      "status": "prerequisites",
+      "status": "planned",
       "progress": 0,
       "createdAt": "2026-10-26T22:54:29.124Z",
-      "updatedAt": "2026-10-27T10:14:52Z",
+      "updatedAt": "2026-11-24T05:11:57+00:00",
       "publication": {
         "year": 2015,
         "publisher": "Routledge",
@@ -137,7 +161,11 @@
         "isbn": "9780805857092",
         "pages": 334,
         "sourceUrl": "https://www.routledge.com/The-Great-Psychotherapy-Debate-The-Evidence-for-What-Makes-Psychotherapy/Wampold-Imel/p/book/9780805857092"
-      }
+      },
+      "areas": [
+        "Clinical psychology",
+        "Research methods"
+      ]
     },
     {
       "id": "motivational-interviewing-4",
@@ -151,10 +179,10 @@
       "url": "https://www.guilford.com/books/Motivational-Interviewing/Miller-Rollnick/9781462552795",
       "description": "",
       "notes": "",
-      "status": "prerequisites",
+      "status": "planned",
       "progress": 0,
       "createdAt": "2026-10-26T22:54:29.124Z",
-      "updatedAt": "2026-10-27T10:14:52Z",
+      "updatedAt": "2026-11-24T05:11:57+00:00",
       "publication": {
         "year": 2023,
         "publisher": "The Guilford Press",
@@ -163,7 +191,11 @@
         "isbn": "9781462552795",
         "pages": 338,
         "sourceUrl": "https://www.guilford.com/books/Motivational-Interviewing/Miller-Rollnick/9781462552795"
-      }
+      },
+      "areas": [
+        "Clinical psychology",
+        "Emotion and motivation"
+      ]
     },
     {
       "id": "physiology-of-sport-and-exercise-8",
@@ -177,7 +209,7 @@
       "url": "https://www.vitalsource.com/products/physiology-of-sport-and-exercise-8th-edition-w-larry-kenney-v9781718217485",
       "description": "",
       "notes": "",
-      "status": "prerequisites",
+      "status": "planned",
       "progress": 0,
       "publication": {
         "year": 2022,
@@ -187,7 +219,10 @@
         "sourceUrl": "https://www.vitalsource.com/products/physiology-of-sport-and-exercise-8th-edition-w-larry-kenney-v9781718217485"
       },
       "createdAt": "2026-11-24T04:31:20+00:00",
-      "updatedAt": "2026-11-24T04:31:20+00:00"
+      "updatedAt": "2026-11-24T05:11:57+00:00",
+      "areas": [
+        "Physiology"
+      ]
     }
   ],
   "practice": []

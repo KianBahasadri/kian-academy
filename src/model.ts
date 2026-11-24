@@ -31,6 +31,9 @@ export interface Resource {
   format: ResourceFormat;
   tier: ResourceTier;
   subjects: string[];
+  overview?: boolean;
+  areas?: string[];
+  specialty?: string;
   url: string;
   description: string;
   notes: string;
@@ -56,8 +59,33 @@ export interface Practice {
 
 export interface Library {
   version: 1;
+  disciplines: Record<string, string[]>;
   resources: Resource[];
   practice: Practice[];
+}
+
+// Indexed by the completed resource's tier (I–IV).
+export const completionTargets = [2, 3, 4, 4] as const;
+
+export function prerequisiteChecks(resource: Resource, resources: Resource[]) {
+  const { tier, specialty } = resource;
+  const discipline = resource.subjects[0];
+  const completed = resources.filter(item => item.status === 'completed' && item.subjects[0] === discipline);
+  const checks: { label: string; count: number; required: number }[] = completionTargets.slice(0, tier - 1).map((required, index) => {
+    const level = resourceTiers[index];
+    const inSpecialty = level.value === 4;
+    const count = completed.filter(item => item.tier === level.value && (!inSpecialty || item.specialty === specialty)).length;
+    return { label: `Tier ${level.numeral} resources in ${inSpecialty ? specialty : discipline}`, count, required };
+  });
+  if (tier >= 2) checks.push({
+    label: `Tier I overview of ${discipline}`, count: completed.filter(item => item.tier === 1 && item.overview).length, required: 1,
+  });
+  if (tier >= 3) {
+    const areas = (levels: ResourceTier[]) => new Set(completed.filter(item => levels.includes(item.tier)).flatMap(item => item.areas ?? [])).size;
+    checks.push({ label: 'Distinct foundational areas in Tier II', count: areas([2]), required: 2 });
+    if (tier >= 4) checks.push({ label: 'Distinct foundational areas across Tiers II and III', count: areas([2, 3]), required: 4 });
+  }
+  return checks;
 }
 
 export function safeUrl(value: string): string {
@@ -86,7 +114,6 @@ function validIsbn13(value: unknown): boolean {
 function validProgress(status: unknown, progress: unknown): boolean {
   if (typeof progress !== 'number' || !Number.isInteger(progress)) return false;
   switch (status) {
-    case 'prerequisites':
     case 'planned': return progress === 0;
     case 'learning': return progress >= 0 && progress < 100;
     case 'completed': return progress === 100;
@@ -102,8 +129,9 @@ export function validateLibrary(data: unknown): Library {
     return typeof date === 'string' && Number.isFinite(Date.parse(date));
   });
   const validLink = (value: unknown): boolean => typeof value === 'string' && (value === '' || Boolean(safeUrl(value)));
-  const validSubjects = (value: unknown): boolean => Array.isArray(value) && value.length > 0 &&
-    value.every(subject => typeof subject === 'string' && subject.trim().length > 0) && new Set(value).size === value.length;
+  const validSubjects = (value: unknown): value is string[] => Array.isArray(value) && value.length > 0 &&
+    value.every(subject => typeof subject === 'string' && subject.trim().length > 0 && subject === subject.trim()) &&
+    new Set(value.map(subject => subject.toLowerCase())).size === value.length;
   const validPublication = (value: unknown, book: boolean): boolean => {
     if (value === undefined) return true;
     if (!isRecord(value)) return false;
@@ -116,7 +144,11 @@ export function validateLibrary(data: unknown): Library {
   };
 
   if (!isRecord(data) || data.version !== 1 || !Array.isArray(data.resources) || !Array.isArray(data.practice)) throw new Error('Unsupported library');
-  const { resources, practice } = data;
+  const { resources, practice, disciplines } = data;
+  if (!isRecord(disciplines) || Array.isArray(disciplines) ||
+    new Set(Object.keys(disciplines).map(name => name.toLowerCase())).size !== Object.keys(disciplines).length ||
+    !Object.entries(disciplines).every(([name, areas]) => name.trim() && name === name.trim() &&
+      validSubjects(areas) && areas.length >= 4)) throw new Error('Invalid discipline definitions');
   if (!resources.every(resource =>
     isRecord(resource) &&
     hasStrings(resource, ['id', 'title', 'creator', 'description', 'notes']) && resource.id && resource.title &&
@@ -125,6 +157,17 @@ export function validateLibrary(data: unknown): Library {
     resourceTiers.some(tier => tier.value === resource.tier) &&
     validProgress(resource.status, resource.progress) && validLink(resource.url)
   )) throw new Error('Invalid resources');
+  for (const resource of resources as Resource[]) {
+    const discipline = resource.subjects[0];
+    const areas = disciplines[discipline] as string[];
+    if (!Object.hasOwn(disciplines, discipline) ||
+      (resource.areas !== undefined && (!(resource.tier === 2 || resource.tier === 3) ||
+        !validSubjects(resource.areas) || !resource.areas.every(area => areas.includes(area)))) ||
+      (resource.overview !== undefined && (resource.tier !== 1 || typeof resource.overview !== 'boolean')) ||
+      (resource.specialty !== undefined && (resource.tier < 4 || typeof resource.specialty !== 'string' ||
+        !resource.specialty.trim() || resource.specialty !== resource.specialty.trim())) ||
+      (resource.tier === 5 && !resource.specialty)) throw new Error(`Invalid prerequisite classification for ${resource.id}`);
+  }
   if (!resources.every(resource => validPublication(resource.publication, resource.format === 'Book' || resource.format === 'Textbook'))) throw new Error('Invalid resource publication metadata');
 
   const resourceIds = new Set(resources.map(resource => resource.id));
@@ -137,5 +180,11 @@ export function validateLibrary(data: unknown): Library {
     (item.resourceId === null || resourceIds.has(item.resourceId)) && validLink(item.url)
   )) throw new Error('Invalid practice');
   if (new Set(practice.map(item => item.id)).size !== practice.length) throw new Error('Duplicate practice');
-  return data as unknown as Library;
+  const library = data as unknown as Library;
+  return { ...library, resources: library.resources.map(resource => {
+    if (resource.status === 'planned' && prerequisiteChecks(resource, library.resources).some(check => check.count < check.required)) {
+      return { ...resource, status: 'prerequisites' };
+    }
+    return resource;
+  }) };
 }

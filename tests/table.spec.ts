@@ -9,6 +9,7 @@ const date = '2026-10-26T12:00:00Z';
 const resource = (id: string, title: string, patch: Partial<Resource> = {}): Resource => ({ id, title, creator: 'Ann', format: 'Book', tier: 2, subjects: ['Psychology'], url: '', description: '', notes: '', status: 'learning', progress: 40, createdAt: date, updatedAt: date, ...patch });
 const fixture: Library = {
   version: 1,
+  disciplines: { Biology: ['Genetics', 'Physiology', 'Ecology', 'Evolution'], Psychology: ['Cognition', 'Development', 'Social psychology', 'Research methods'] },
   resources: [
     resource('gamma', 'Gamma', { subjects: ['Biology'], status: 'completed', progress: 100 }),
     resource('epsilon', 'Epsilon', { creator: 'Zed' }),

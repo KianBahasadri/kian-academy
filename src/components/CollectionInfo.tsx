@@ -1,6 +1,6 @@
 import { BookOpen, ChartNoAxesColumnIncreasing, ChevronDown, Library, SlidersHorizontal } from 'lucide-react';
 import { Dialog, Status } from './ui';
-import { resourceTiers } from '../model';
+import { completionTargets, resourceTiers } from '../model';
 
 export function CollectionInfo({ collection, onClose }: { collection: 'resources' | 'practice'; onClose: () => void }) {
   const isResources = collection === 'resources';
@@ -17,7 +17,7 @@ export function CollectionInfo({ collection, onClose }: { collection: 'resources
             <h3><BookOpen aria-hidden="true" />Learning progress</h3>
             <p>Progress and notes reflect Kian’s published updates.</p>
             <dl className="progress-legend">
-              <div><dt><Status value="prerequisites" /></dt><dd>Building the foundations</dd></div>
+              <div><dt><Status value="prerequisites" /></dt><dd>Still missing a tier requirement</dd></div>
               <div><dt><Status value="planned" /></dt><dd>Ready to start</dd></div>
               <div><dt><Status value="learning" /></dt><dd>Currently studying</dd></div>
               <div><dt><Status value="completed" /></dt><dd>Finished</dd></div>
@@ -40,6 +40,24 @@ export function CollectionInfo({ collection, onClose }: { collection: 'resources
         <h3>Related resources</h3>
         <p>Practice can be linked to the learning material it builds on, or marked Independent. Use the resource filter to explore related work when practice is available.</p>
       </>}
+      {isResources && <section className="unlock-guide">
+        <h3>Tier prerequisites</h3>
+        <p>Count each completed resource once in its primary discipline. Each tier carries forward all earlier requirements.</p>
+        <table><thead><tr><th>To start</th><th>Completions</th><th>Coverage</th></tr></thead>
+          <tbody>{resourceTiers.map(tier => <tr key={tier.value}>
+            <th scope="row">Tier {tier.numeral}</th>
+            <td>{completionTargets.slice(0, tier.value - 1).map((n, i) => `${n} Tier ${resourceTiers[i].numeral}`).join(' + ') || 'None'}</td>
+            <td>{[
+              'Open immediately.',
+              'Include a Tier I overview of the discipline.',
+              'Cover two foundational areas with the Tier II resources.',
+              'Cover four distinct foundational areas across Tiers II and III.',
+              'All four Tier IV resources must cover the specific specialty of this Tier V resource.',
+            ][tier.value - 1]}</td>
+          </tr>)}</tbody>
+        </table>
+        <p>Open a resource to see its counts. Recording a completion updates readiness throughout the catalog.</p>
+      </section>}
       {isResources ? <details className="guide-controls">
         <summary><SlidersHorizontal size={16} aria-hidden="true" />Table controls<ChevronDown size={16} aria-hidden="true" /></summary>
         <TableHelp />

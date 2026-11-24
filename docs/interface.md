@@ -10,7 +10,7 @@ Dropdowns accept listed values. Type to narrow the choices and use the arrow key
 
 Select a row's title to open its detail panel. Arrow keys move between rows, with Home and End for the first and last rows on the page. A resource's practice count opens Practice filtered to that resource, and practice details link back to the associated resource when present. Resource details show published description, bibliographic metadata, and notes where available. They also show a compact tier tag and recorded progress. [Detail panels](../src/components/Details.tsx)
 
-**Help** explains the current collection. The resource guide shows learning progress beside the five tier definitions on wide screens and stacks them on phones. Expand **Table controls** for sorting, filtering, layout, and export instructions. The search button opens the command dialog. It is also available with Ctrl+K, Cmd+K, or Ctrl+Space. Use **Keyboard shortcuts** in the command dialog or press Alt+/ to see the available keys. [Commands](../src/components/Commands.tsx) · [Help](../src/components/CollectionInfo.tsx)
+**Help** explains the current collection. The resource guide shows learning progress beside the five tier definitions on wide screens and stacks them on phones. The tier prerequisite table explains the cumulative thresholds. Each resource’s detail panel shows earned and required counts. Expand **Table controls** for sorting, filtering, layout, and export instructions. The search button opens the command dialog. It is also available with Ctrl+K, Cmd+K, or Ctrl+Space. Use **Keyboard shortcuts** in the command dialog or press Alt+/ to see the available keys. [Commands](../src/components/Commands.tsx) · [Help](../src/components/CollectionInfo.tsx)
 
 ## Shared table controls
 

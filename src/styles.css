@@ -244,6 +244,14 @@ progress::-moz-progress-bar { background: var(--accent); border-radius: 2px; }
 .tier-legend dd, .progress-legend dd { color: var(--ink); margin: 0; }
 .progress-legend > div { grid-template-columns: minmax(125px, .9fr) 1fr; border-top: 1px solid var(--line-soft); }
 .progress-legend .status { font-size: 13px; }
+.unlock-guide { margin-top: 24px; }
+.unlock-guide table { width: 100%; margin: 12px 0; border-collapse: collapse; font-size: 13px; }
+.unlock-guide th, .unlock-guide td { padding: 8px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+.unlock-guide thead, .unlock-counts dd { color: var(--accent); }
+.unlock-guide tbody th { white-space: nowrap; }
+.unlock-counts { margin: 8px 0; }
+.unlock-counts > div { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--line-soft); }
+.unlock-counts dd { margin: 0; white-space: nowrap; font-family: var(--mono); }
 .guide-controls { margin-top: 22px; border-block: 1px solid var(--line); }
 .guide-controls summary { display: flex; align-items: center; gap: 9px; padding: 14px 2px; color: var(--ink); cursor: pointer; list-style: none; font-weight: 500; }
 .guide-controls summary::-webkit-details-marker { display: none; }
