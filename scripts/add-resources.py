@@ -7,6 +7,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -49,18 +50,35 @@ Kian's inputs:
     agent = {"mode": "primary", "description": "Catalog research", "permissions": permissions}
     with tempfile.TemporaryDirectory() as work:
         (Path(work) / "opencode.json").write_text(json.dumps({"agents": {"catalog": agent}}))
-        run = subprocess.run(
+        count = len(items)
+        print(f"Researching {count} resource{'s' if count != 1 else ''} with OpenCode Go (max effort)…",
+              file=sys.stderr, flush=True)
+        started = time.monotonic()
+        with subprocess.Popen(
             ["opencode", "run", "--agent", "catalog", "--model", MODEL, "--format", "json"],
-            cwd=work, env={**os.environ, "PWD": work}, input=prompt, text=True, stdout=subprocess.PIPE,
-        )
+            cwd=work, env={**os.environ, "PWD": work}, stdin=subprocess.PIPE, text=True, stdout=subprocess.PIPE,
+        ) as run:
+            try:
+                while True:
+                    try:
+                        output, _ = run.communicate(prompt, timeout=15)
+                        break
+                    except subprocess.TimeoutExpired:
+                        prompt = None  # communicate resumes the original input on retry.
+                        elapsed = int(time.monotonic() - started)
+                        print(f"Waiting for OpenCode Go ({elapsed}s elapsed)…", file=sys.stderr, flush=True)
+            except BaseException:
+                run.kill()
+                raise
     answer = ""
-    for line in run.stdout.splitlines():
+    for line in output.splitlines():
         event = json.loads(line)
         if event["type"] == "error":
             raise ValueError(f"OpenCode failed: {event.get('error')}")
         if event["type"] == "text":
             answer = event["part"]["text"]
-    run.check_returncode()
+    if run.returncode:
+        raise subprocess.CalledProcessError(run.returncode, run.args)
     if not answer:
         raise ValueError("OpenCode returned no answer.")
     results = json.loads(answer)

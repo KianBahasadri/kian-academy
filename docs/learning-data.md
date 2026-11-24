@@ -14,7 +14,7 @@ Run the importer with Python 3 on Linux or macOS, the repository's Node.js versi
 
 Give each resource its own argument, or run the command without arguments and paste one resource per line, finishing with Ctrl-D. You can also pipe in a list. Include an ISBN or publisher URL for a particular edition and any progress you want recorded on that line.
 
-Go researches the items against the current catalog and proposes metadata and classifications. The script reports duplicates and unresolved inputs, validates the complete catalog, and saves additions together in `data/library.json`. Use `--dry-run` to preview a batch. Review the saved changes with `git diff -- data/library.json` before committing.
+Go researches the items against the current catalog and proposes metadata and classifications. While it waits for Go, the importer prints the elapsed time every 15 seconds. The script reports duplicates and unresolved inputs, validates the complete catalog, and saves additions together in `data/library.json`. Use `--dry-run` to preview a batch. Review the saved changes with `git diff -- data/library.json` before committing.
 
 ## Resources
 
