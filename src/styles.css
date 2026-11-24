@@ -187,9 +187,6 @@ main:focus { outline: none; }
 .subject-list > li + li::before { content: '·'; margin-right: 8px; color: var(--faint); }
 .eyebrow .subject-list { justify-content: flex-start; }
 .tier-label { color: var(--muted); font-size: 12px; white-space: nowrap; }
-.tier-legend { display: grid; gap: 16px; margin: 16px 0 0; }
-.tier-legend dt { color: var(--ink); font-size: 13px; font-weight: 500; }
-.tier-legend dd { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
 .not-started { display: inline-flex; align-items: center; gap: 7px; color: var(--faint); font-size: 12px; white-space: nowrap; }
 .status-dot { display: inline-block; width: 6px; height: 6px; border: 1px solid currentColor; border-radius: 50%; flex-shrink: 0; }
 .table-progress { width: 120px; margin-inline: auto; color: var(--muted); }
@@ -225,6 +222,41 @@ progress::-moz-progress-bar { background: var(--accent); border-radius: 2px; }
 .dialog-body { padding: 26px; }
 .collection-info p { color: var(--muted); font-size: 13px; line-height: 1.7; }
 .collection-info h3 { margin: 24px 0 8px; }
+.dialog.resource-guide { width: min(940px, calc(100vw - 24px)); }
+.resource-guide .dialog-header { padding: 22px 26px; background: linear-gradient(110deg, var(--blue-soft), var(--canvas) 85%); }
+.resource-guide .dialog-header h2 { font-size: clamp(21px, 3vw, 28px); letter-spacing: -.035em; line-height: 1.2; }
+.guide-columns { display: grid; grid-template-columns: .85fr 1.15fr; gap: 30px; }
+.resource-guide h3 { display: flex; align-items: center; gap: 9px; font-size: 17px; margin: 0 0 8px; }
+.resource-guide h3 svg { width: 18px; height: 18px; color: var(--accent); }
+.resource-guide p, .tier-legend dd, .progress-legend dd { font-size: 14px; line-height: 1.55; }
+.guide-overview { padding-top: 5px; }
+.guide-overview p + p { margin-top: 8px; }
+.guide-overview section + section { border-top: 1px solid var(--line); margin-top: 22px; padding-top: 20px; }
+.guide-tiers { padding: 18px 20px; border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius); }
+.tier-legend, .progress-legend { margin: 12px 0 0; }
+.tier-legend > div, .progress-legend > div { display: grid; align-items: baseline; gap: 12px; padding: 9px 0; }
+.tier-legend > div { grid-template-columns: 48px 1fr; border-top: 1px solid var(--line); }
+.tier-legend > div:last-child { padding-bottom: 0; }
+.tier-legend dt { font: 12px var(--mono); color: var(--ink-strong); }
+.tier-scale { display: flex; gap: 2px; margin-top: 6px; }
+.tier-scale i { width: 7px; height: 3px; background: var(--line); }
+.tier-scale .filled { background: var(--accent); }
+.tier-legend dd, .progress-legend dd { color: var(--ink); margin: 0; }
+.progress-legend > div { grid-template-columns: minmax(125px, .9fr) 1fr; border-top: 1px solid var(--line-soft); }
+.progress-legend .status { font-size: 13px; }
+.guide-controls { margin-top: 22px; border-block: 1px solid var(--line); }
+.guide-controls summary { display: flex; align-items: center; gap: 9px; padding: 14px 2px; color: var(--ink); cursor: pointer; list-style: none; font-weight: 500; }
+.guide-controls summary::-webkit-details-marker { display: none; }
+.guide-controls summary svg { color: var(--accent); }
+.guide-controls summary svg:last-child { margin-left: auto; }
+.guide-controls[open] summary svg:last-child { transform: rotate(180deg); }
+.guide-controls .table-help { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; padding: 2px 0 18px; }
+.table-help strong { color: var(--ink); font-weight: 500; }
+@media (max-width: 720px) {
+  .guide-columns, .guide-controls .table-help { grid-template-columns: 1fr; gap: 20px; }
+  .guide-tiers { padding: 16px; }
+  .resource-guide .dialog-header { padding: 16px 20px; }
+}
 .dialog.command-dialog { position: fixed; margin: 0 auto; top: 12vh; bottom: auto; width: min(600px, calc(100vw - 32px)); max-height: min(560px, 76dvh); flex-direction: column; overflow: hidden; border-radius: 6px; background: var(--surface-raised); box-shadow: 0 16px 40px #0000006b; }
 .command-dialog[open] { display: flex; }
 .command-dialog::backdrop, .shortcuts-dialog::backdrop { background: #000000a6; }
