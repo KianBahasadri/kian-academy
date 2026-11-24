@@ -5,7 +5,7 @@ export const resourceTiers = [
   { value: 2, description: 'You have seen the basic ideas before and recognize the main terms.' },
   { value: 3, description: 'You understand the core concepts and have read about related topics.' },
   { value: 4, description: 'You know the field well and can apply its methods to unfamiliar problems.' },
-  { value: 5, description: 'You already know the research questions and techniques of a particular specialty within the field.' },
+  { value: 5, description: 'You already know the research questions and techniques of the specific specialty this resource covers.' },
 ] as const;
 
 type ResourceFormat = typeof resourceFormats[number];

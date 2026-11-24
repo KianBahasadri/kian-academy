@@ -50,7 +50,7 @@ Choose a format from `YouTube playlist`, `Course`, `Book`, `Textbook`, `Article`
 | 2 | You have seen the basic ideas before and recognize the main terms. |
 | 3 | You understand the core concepts and have read about related topics. |
 | 4 | You know the field well and can apply its methods to unfamiliar problems. |
-| 5 | You already know the research questions and techniques of a particular specialty within the field. |
+| 5 | You already know the research questions and techniques of the specific specialty this resource covers. |
 
 ### Readiness and progress
 
