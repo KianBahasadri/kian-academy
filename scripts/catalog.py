@@ -1,4 +1,4 @@
-"""Add learning resources using the authenticated OpenCode Go CLI."""
+"""Add learning resources and record completions in the published catalog."""
 
 import argparse
 import fcntl
@@ -103,13 +103,11 @@ def isbn_of(resource):
     return str(publication.get("isbn", "")).replace("-", "").replace(" ", "")
 
 
-def ingest(items, dry_run):
-    original = CATALOG.read_bytes()
-    library = json.loads(original)
+def add_resources(items, library, now, dry_run):
     resources = library["resources"]
     results = research(items, library)
     receipts = []
-    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    changed = []
     for item, result in zip(items, results):
         if isinstance(result, str) and result.strip():
             receipts.append(f"Skipped {item}: {result}")
@@ -136,52 +134,95 @@ def ingest(items, dry_run):
                 raise ValueError(f"Proposed duplicate of {existing['title']!r} for {item!r}.")
         result.update(createdAt=now, updatedAt=now)
         resources.append(result)
+        changed.append(result)
         receipts.append(f"{'Would add' if dry_run else 'Added'} {result['title']} ({result['url']})")
+
+    return changed, receipts
+
+
+def complete_resources(items, library, now, dry_run):
+    changed, receipts = [], []
+    for item in items:
+        isbn = item.replace("-", "").replace(" ", "")
+        matches = [
+            resource for resource in library["resources"]
+            if item == resource["id"] or item == resource["url"]
+            or item.casefold() == resource["title"].casefold()
+            or (isbn.isdigit() and isbn == isbn_of(resource))
+        ]
+        if not matches:
+            raise ValueError(f"No resource matches {item!r}. Use its ID, full title, ISBN, or URL.")
+        if len(matches) > 1:
+            ids = ", ".join(resource["id"] for resource in matches)
+            raise ValueError(f"Multiple resources match {item!r}. Use a resource ID: {ids}.")
+        resource = matches[0]
+        if resource["status"] == "completed":
+            receipts.append(f"Already complete: {resource['title']}")
+            continue
+        resource.update(status="completed", progress=100, updatedAt=now)
+        changed.append(resource)
+        receipts.append(f"{'Would complete' if dry_run else 'Completed'} {resource['title']}")
+    return changed, receipts
+
+
+def update_catalog(command, items, dry_run):
+    original = CATALOG.read_bytes()
+    library = json.loads(original)
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    if command == "add":
+        changed, receipts = add_resources(items, library, now, dry_run)
+    else:
+        changed, receipts = complete_resources(items, library, now, dry_run)
 
     # Lock the directory because replacing the catalog changes its inode.
     lock = os.open(CATALOG.parent, os.O_RDONLY)
     try:
         fcntl.flock(lock, fcntl.LOCK_EX)
         if CATALOG.read_bytes() != original:
-            raise ValueError("Catalog changed during research. Run again against the new catalog.")
+            raise ValueError("Catalog changed during this update. Run again against the new catalog.")
         with tempfile.NamedTemporaryFile(dir=CATALOG.parent, delete=False) as tmp:
             candidate = Path(tmp.name)
         try:
             candidate.write_text(json.dumps(library, indent=2, ensure_ascii=False) + "\n")
             subprocess.run(["node", ROOT / "scripts/validate-data.mjs", candidate], check=True)
-            additions = [result["title"] for result in results if isinstance(result, dict)]
-            if additions and not dry_run:
+            if changed and not dry_run:
                 path = "data/library.json"
                 branch = subprocess.check_output(["git", "branch", "--show-current"], cwd=ROOT, text=True)
                 if branch.strip() != "main":
-                    raise ValueError("Switch to main to publish additions.")
+                    raise ValueError("Switch to main to publish catalog updates.")
                 if subprocess.check_output(["git", "status", "--porcelain", "--", path], cwd=ROOT):
-                    raise ValueError("Commit your existing catalog changes before importing additions.")
+                    raise ValueError("Commit your existing catalog changes before publishing an update.")
                 candidate.chmod(CATALOG.stat().st_mode)
                 candidate.replace(CATALOG)
-                message = f"Add {additions[0]}" if len(additions) == 1 else f"Add {len(additions)} learning resources"
+                subject = changed[0]["title"] if len(changed) == 1 else f"{len(changed)} learning resources"
+                message = f"{command.capitalize()} {subject}"
                 subprocess.run(["git", "commit", "--only", "-m", message, "--", path], cwd=ROOT, check=True)
                 subprocess.run(["npm", "run", "build"], cwd=ROOT, check=True)
                 subprocess.run(["npm", "test"], cwd=ROOT, check=True)
                 try:
                     subprocess.run(["git", "push", "origin", "main"], cwd=ROOT, check=True)
                 except subprocess.CalledProcessError as error:
-                    raise ValueError("Addition committed locally. After resolving the push error, run git push origin main.") from error
+                    raise ValueError("Catalog update committed locally. After resolving the push error, run git push origin main.") from error
         finally:
             candidate.unlink(missing_ok=True)
     finally:
         os.close(lock)
     print("\n".join(receipts))
     if dry_run:
-        for result in results:
-            if isinstance(result, dict):
-                print(json.dumps(result, indent=2, ensure_ascii=False))
+        for resource in changed:
+            print(json.dumps(resource, indent=2, ensure_ascii=False))
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("items", nargs="*", help="One quoted title, ISBN, or URL per argument.")
-    parser.add_argument("--dry-run", action="store_true", help="Research and validate without saving.")
+    parser = argparse.ArgumentParser(prog="./catalog", description=__doc__)
+    commands = parser.add_subparsers(dest="command", required=True)
+    for name, description, selectors in [
+        ("add", "Research and add new resources using OpenCode Go.", "title, ISBN, or URL"),
+        ("complete", "Mark existing resources as completed.", "ID, full title, ISBN, or URL"),
+    ]:
+        sub = commands.add_parser(name, help=description, description=description)
+        sub.add_argument("items", nargs="*", help=f"One {selectors} per argument, or one per line on stdin.")
+        sub.add_argument("--dry-run", action="store_true", help="Preview and validate without saving.")
     args = parser.parse_args()
     if not args.items and sys.stdin.isatty():
         print("Paste one resource per line. Press Ctrl-D when finished.", file=sys.stderr)
@@ -190,6 +231,6 @@ if __name__ == "__main__":
     if not items:
         parser.error("Provide at least one resource.")
     try:
-        ingest(items, args.dry_run)
+        update_catalog(args.command, items, args.dry_run)
     except (OSError, ValueError, TypeError, KeyError, subprocess.CalledProcessError) as error:
-        sys.exit(f"Ingestion failed: {error}")
+        sys.exit(f"Catalog update failed: {error}")

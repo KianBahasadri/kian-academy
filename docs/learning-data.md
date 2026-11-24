@@ -4,17 +4,21 @@
 
 Use `version: 1` and keep both `resources` and `practice` as arrays. Give each entry a nonempty `id` and `title`. IDs must be unique within their collection and should remain stable across edits. Use ISO 8601 for `createdAt` and `updatedAt`. The validator requires parseable date strings.
 
-## Adding resources with OpenCode Go
+## Catalog commands
 
-Run the importer with Python 3 on Linux or macOS, the repository's Node.js version, and the OpenCode v2 CLI. It uses your existing Go login to run DeepSeek V4.1 Flash with maximum reasoning effort. For first-time setup, run `opencode`, enter `/connect`, and select OpenCode Go. [Go setup](https://opencode.ai/docs/console/go/)
+Run `./catalog` from the repository root using Python 3 on Linux or macOS and the repository’s Node.js version.
 
 ```sh
-./add-resources "Thinking in Systems by Donella Meadows" "https://docs.python.org/3/tutorial/"
+./catalog add "Thinking in Systems by Donella Meadows" "https://docs.python.org/3/tutorial/"
+./catalog complete --dry-run feeling-good
+./catalog complete feeling-good
 ```
 
-Give each resource its own argument, or run the command without arguments and paste one resource per line, finishing with Ctrl-D. You can also pipe in a list. Include an ISBN or publisher URL for a particular edition and any progress you want recorded on that line.
+**Add** accepts a title, ISBN, or URL, plus any progress you explicitly report on that line. It researches each item with OpenCode Go using DeepSeek V4.1 Flash at maximum reasoning effort. It reports duplicates and unresolved items and prints elapsed time every 15 seconds while waiting. For first-time setup, run `opencode`, enter `/connect`, and select OpenCode Go. [Go setup](https://opencode.ai/docs/console/go/)
 
-Go researches the items against the current catalog and proposes metadata and classifications. While it waits for Go, the importer prints the elapsed time every 15 seconds. The script reports duplicates and unresolved inputs, validates the complete catalog, and commits additions together in `data/library.json` on `main`. It runs the build and tests, then pushes `main` to `origin` for Pages deployment. Start with a clean catalog. Use `--dry-run` to preview the records. A preview or a batch with only skipped items creates no commit or push.
+**Complete** matches existing resources locally by ID, full title (case-insensitive), ISBN-13, or exact resource URL. It sets status to `completed`, progress to 100, and updates the modification time. Already-completed entries are skipped. An unknown or ambiguous input stops the whole batch before saving. Published completions count toward tier prerequisites.
+
+Both commands accept several quoted arguments, piped input, or one resource per line pasted into the terminal and finished with Ctrl-D. Use `--dry-run` after the command name to preview. Start with a clean catalog to publish. The script validates the full catalog, commits changed entries together on `main`, runs the build and tests, then pushes to `origin`. Previews and batches with no changes skip publication.
 
 ## Resources
 
