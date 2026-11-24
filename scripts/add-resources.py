@@ -131,9 +131,24 @@ def ingest(items, dry_run):
         try:
             candidate.write_text(json.dumps(library, indent=2, ensure_ascii=False) + "\n")
             subprocess.run(["node", ROOT / "scripts/validate-data.mjs", candidate], check=True)
-            if not dry_run and any(isinstance(result, dict) for result in results):
+            additions = [result["title"] for result in results if isinstance(result, dict)]
+            if additions and not dry_run:
+                path = "data/library.json"
+                branch = subprocess.check_output(["git", "branch", "--show-current"], cwd=ROOT, text=True)
+                if branch.strip() != "main":
+                    raise ValueError("Switch to main to publish additions.")
+                if subprocess.check_output(["git", "status", "--porcelain", "--", path], cwd=ROOT):
+                    raise ValueError("Commit your existing catalog changes before importing additions.")
                 candidate.chmod(CATALOG.stat().st_mode)
                 candidate.replace(CATALOG)
+                message = f"Add {additions[0]}" if len(additions) == 1 else f"Add {len(additions)} learning resources"
+                subprocess.run(["git", "commit", "--only", "-m", message, "--", path], cwd=ROOT, check=True)
+                subprocess.run(["npm", "run", "build"], cwd=ROOT, check=True)
+                subprocess.run(["npm", "test"], cwd=ROOT, check=True)
+                try:
+                    subprocess.run(["git", "push", "origin", "main"], cwd=ROOT, check=True)
+                except subprocess.CalledProcessError as error:
+                    raise ValueError("Addition committed locally. After resolving the push error, run git push origin main.") from error
         finally:
             candidate.unlink(missing_ok=True)
     finally:
