@@ -80,7 +80,9 @@ function ColumnFilterForm({ column, choices, filter, onChange }: { column: Table
   return <form ref={form} className="column-filter-form" aria-label={`Filter ${column.title}`} onSubmit={event => event.preventDefault()}>
     {column.number ? <>
       <label>Condition<Select label={`${column.title} condition`} value={operator} onChange={next => changeNumber(value, next as typeof operator, numberValid)} options={numberFilterOptions} /></label>
-      <label>{column.title}<input aria-label={`Filter ${column.title.toLowerCase()}`} aria-invalid={!numberValid || undefined} type="number" min={column.number.min} max={column.number.max} value={value} onChange={event => changeNumber(event.target.value, operator, event.target.validity.valid)} /></label>
+      <label>{column.title}{choices
+        ? <Select label={`Filter ${column.title.toLowerCase()}`} value={value} options={choices} onChange={next => changeNumber(next, operator, true)} />
+        : <input aria-label={`Filter ${column.title.toLowerCase()}`} aria-invalid={!numberValid || undefined} type="number" min={column.number.min} max={column.number.max} value={value} onChange={event => changeNumber(event.target.value, operator, event.target.validity.valid)} />}</label>
     </> : choices ? <fieldset className="column-filter-choices" aria-label={`${column.title} filter values`}>
       <legend>Filter</legend><div className="column-filter-sides" aria-hidden="true"><span>Include</span><span>Exclude</span></div>
       <div className="column-filter-options">{choices.map(choice => <div className="column-filter-option" key={choice.value}>

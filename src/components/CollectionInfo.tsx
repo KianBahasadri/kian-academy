@@ -28,7 +28,7 @@ export function CollectionInfo({ collection, onClose }: { collection: 'resources
           <h3><ChartNoAxesColumnIncreasing aria-hidden="true" />Resource tiers</h3>
           <p>Tiers describe the intended audience and assumed knowledge, independently of learning progress.</p>
           <dl className="tier-legend">{resourceTiers.map(tier => <div key={tier.value}>
-            <dt>Tier {tier.value}<span className="tier-scale" aria-hidden="true">{resourceTiers.map(step =>
+            <dt>Tier {tier.numeral}<span className="tier-scale" aria-hidden="true">{resourceTiers.map(step =>
               <i key={step.value} className={step.value <= tier.value ? 'filled' : ''} />)}</span></dt>
             <dd>{tier.description}</dd>
           </div>)}</dl>

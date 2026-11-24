@@ -22,7 +22,11 @@ type ColumnFilters = Partial<Record<ColumnKey, ColumnFilter>>;
 type ColumnPreferences = { order: ColumnKey[]; visible: ColumnKey[] };
 export type ColumnDropTarget = { key: ColumnKey; edge: 'before' | 'after' };
 
-export function tableValueText(value: TableValue): string {
+export function tableValueText(value: TableValue, choices?: TableColumn['choices']): string {
+  if (typeof value === 'number' && Array.isArray(choices)) {
+    const choice = choices.find(option => option.value === String(value));
+    if (choice) return choice.label;
+  }
   return Array.isArray(value) ? value.join(', ') : String(value ?? '');
 }
 
@@ -85,7 +89,7 @@ export function filterLabel(filter: ColumnFilter, choices?: FilterChoice[]): str
     const included = labels(filter.values) || 'Any';
     return filter.excludedValues.length ? `${included} except ${labels(filter.excludedValues)}` : included;
   }
-  return `${numberFilterLabels[filter.operator]} ${filter.value}`;
+  return `${numberFilterLabels[filter.operator]} ${tableValueText(filter.value, choices)}`;
 }
 
 export function filterChoices<Row>(column: TableColumn, items: Row[], model: TableModel<Row>): FilterChoice[] | undefined {

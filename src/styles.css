@@ -235,7 +235,7 @@ progress::-moz-progress-bar { background: var(--accent); border-radius: 2px; }
 .guide-tiers { padding: 18px 20px; border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius); }
 .tier-legend, .progress-legend { margin: 12px 0 0; }
 .tier-legend > div, .progress-legend > div { display: grid; align-items: baseline; gap: 12px; padding: 9px 0; }
-.tier-legend > div { grid-template-columns: 48px 1fr; border-top: 1px solid var(--line); }
+.tier-legend > div { grid-template-columns: 8ch 1fr; border-top: 1px solid var(--line); }
 .tier-legend > div:last-child { padding-bottom: 0; }
 .tier-legend dt { font: 12px var(--mono); color: var(--ink-strong); }
 .tier-scale { display: flex; gap: 2px; margin-top: 6px; }

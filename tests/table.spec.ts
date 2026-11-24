@@ -34,6 +34,16 @@ async function options(page: Page, title: string) {
   return page.getByRole('group', { name: `Column actions for ${title}`, exact: true });
 }
 
+test('tier range filtering uses Roman numerals in the selector and chip', async ({ page }) => {
+  await load(page);
+  await options(page, 'Tier');
+  await chooseOption(page, 'Tier condition', 'At least');
+  await chooseOption(page, 'Filter tier', 'II');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', { name: 'Tier: At least II', exact: true })).toBeVisible();
+  await expect(grid(page).locator('tbody td[data-column-key="tier"]')).toHaveText(['II', 'II', 'III', 'II']);
+});
+
 test('columns can be shown, hidden, reordered, reset, and kept separate for each collection', async ({ page }) => {
   await load(page);
   await page.getByRole('button', { name: 'Columns', exact: true }).click();
@@ -321,7 +331,7 @@ test('CSV exports matching rows and visible column order with correct quoting', 
   const csv = await readFile((await download.path())!, 'utf8');
   expect(csv).toContain('"Format","Resource","Tier","Progress","Practice","Notes"');
   expect(csv).toContain('"A note with ""quotes"", and a comma.\nSecond paragraph."');
-  expect(csv).toContain('"Alpha"'); expect(csv).toContain('"Gamma"'); expect(csv).toContain('"Epsilon"');
+  expect(csv).toContain('"Alpha","II"'); expect(csv).toContain('"Gamma"'); expect(csv).toContain('"Epsilon"');
   expect(csv).not.toContain('"Beta"'); expect(csv).not.toContain('"Delta"');
 });
 

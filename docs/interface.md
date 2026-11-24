@@ -4,7 +4,7 @@ The React app opens Resources at `#/resources` and Practice at `#/practice`. Ope
 
 ## Browsing
 
-Use the status tabs and search field to narrow the current collection. **Filters** opens choices for subject and format, with a tier filter on Resources and a related-resource filter on Practice when work is available. Resource subject filters match the individual subjects in a list. Updating a quick filter clears the column filter for that field, and updating the column filter clears its quick filter. **Reset filters** clears search and both kinds of filters.
+Use the status tabs and search field to narrow the current collection. **Filters** opens choices for subject and format, with a tier filter on Resources and a related-resource filter on Practice when work is available. Resource tiers use Roman numerals I through V in the table, filters, details, help, and CSV export. Resource subject filters match the individual subjects in a list. Updating a quick filter clears the column filter for that field, and updating the column filter clears its quick filter. **Reset filters** clears search and both kinds of filters.
 
 Dropdowns accept listed values. Type to narrow the choices and use the arrow keys and Enter to select. Escape restores the committed selection. Leaving the field accepts an exact, case-insensitive label match and restores the current selection for unmatched text. [Select](../src/components/Select.tsx)
 

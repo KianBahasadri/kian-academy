@@ -1,11 +1,11 @@
 export const resourceFormats = ['YouTube playlist', 'Course', 'Book', 'Textbook', 'Article', 'Other'] as const;
 export const practiceFormats = ['Essay', 'Video', 'Project', 'Notes', 'Other'] as const;
 export const resourceTiers = [
-  { value: 1, description: 'You can start here on your own, without prior study or a university background.' },
-  { value: 2, description: 'You have seen the basic ideas before and recognize the main terms.' },
-  { value: 3, description: 'You understand the core concepts and have read about related topics.' },
-  { value: 4, description: 'You know the field well and can apply its methods to unfamiliar problems.' },
-  { value: 5, description: 'You already know the research questions and techniques of the specific specialty this resource covers.' },
+  { value: 1, numeral: 'I', description: 'You can start here on your own, without prior study or a university background.' },
+  { value: 2, numeral: 'II', description: 'You have seen the basic ideas before and recognize the main terms.' },
+  { value: 3, numeral: 'III', description: 'You understand the core concepts and have read about related topics.' },
+  { value: 4, numeral: 'IV', description: 'You know the field well and can apply its methods to unfamiliar problems.' },
+  { value: 5, numeral: 'V', description: 'You already know the research questions and techniques of the specific specialty this resource covers.' },
 ] as const;
 
 type ResourceFormat = typeof resourceFormats[number];

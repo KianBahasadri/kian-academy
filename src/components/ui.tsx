@@ -2,7 +2,7 @@ import { useEffect, useId, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { Book, BookOpen, Check, Code2, FileText, Globe, GraduationCap, Link2, NotebookPen, Video, X, Youtube } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import type { ResourceTier } from '../model';
+import { resourceTiers, type ResourceTier } from '../model';
 export { Select } from './Select';
 
 const formatIcons: Record<string, LucideIcon> = {
@@ -35,7 +35,7 @@ export function Status({ value }: { value: string }) {
 }
 
 export function Tier({ value }: { value: ResourceTier }) {
-  return <span className="tier-label">Tier {value}</span>;
+  return <span className="tier-label">Tier {resourceTiers[value - 1].numeral}</span>;
 }
 
 export function Dialog({ title, onClose, children, drawer = false, className = '', returnFocus }: { title: string; onClose: () => void; children: ReactNode; drawer?: boolean; className?: string; returnFocus?: HTMLElement | null }) {

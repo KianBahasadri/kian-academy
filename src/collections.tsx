@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { ArrowUpRight, NotebookPen } from 'lucide-react';
 import type { Library, Practice, Resource } from './model';
-import { practiceFormats, resourceFormats, safeUrl, sourceHost, wordCount } from './model';
+import { practiceFormats, resourceFormats, resourceTiers, safeUrl, sourceHost, wordCount } from './model';
 import type { TableColumn, TableModel } from './table';
 import { ResourceMark, Status, Subjects } from './components/ui';
 
@@ -19,7 +19,7 @@ export const resourceColumns: TableColumn[] = [
   { key: 'creator', title: 'Creator', wrap: true, width: 200 },
   { key: 'format', title: 'Format', choices: resourceFormats.map(value => ({ value, label: value })), width: 130 },
   { key: 'subjects', title: 'Subjects', choices: 'values', wrap: true, width: 180 },
-  { key: 'tier', title: 'Tier', number: { min: 1, max: 5 }, width: 110 },
+  { key: 'tier', title: 'Tier', choices: resourceTiers.map(tier => ({ value: String(tier.value), label: tier.numeral })), number: { min: 1, max: 5 }, width: 110 },
   { key: 'progress', title: 'Progress', number: { min: 0, max: 100 }, minWidth: 156, width: 180 },
   { key: 'status', title: 'Status', choices: ['prerequisites', 'planned', 'learning', 'completed'].map(value => ({ value, label: statusLabels[value] })), width: 150 },
   { key: 'practice', title: 'Practice', number: { min: 0, max: Number.MAX_SAFE_INTEGER }, width: 130 },
@@ -103,7 +103,7 @@ export function renderCollectionCell(
     }
     case 'format': return <span className="format-label">{item.format}</span>;
     case 'subjects': return 'subjects' in item ? <Subjects values={item.subjects} /> : null;
-    case 'tier': return 'tier' in item ? <span className="tier-label">{item.tier}</span> : null;
+    case 'tier': return 'tier' in item ? <span className="tier-label">{resourceTiers[item.tier - 1].numeral}</span> : null;
     case 'status': return <Status value={item.status} />;
     case 'progress': {
       if (!('progress' in item)) return null;
