@@ -46,11 +46,11 @@ Choose a format from `YouTube playlist`, `Course`, `Book`, `Textbook`, `Article`
 
 | Tier | Meaning |
 | --- | --- |
-| 1 | For a general reader, with no prior study or university background and a manageable scope for independent learning. |
-| 2 | Builds on entry-level familiarity with the topic. |
-| 3 | Assumes established foundations and broader relevant reading. |
-| 4 | Assumes substantial knowledge of the subject and its methods. |
-| 5 | Written for specialists in a narrow area, beyond general expertise in the wider discipline. |
+| 1 | You can start here on your own, without prior study or a university background. |
+| 2 | You have seen the basic ideas before and recognize the main terms. |
+| 3 | You understand the core concepts and have read about related topics. |
+| 4 | You know the field well and can apply its methods to unfamiliar problems. |
+| 5 | You already know the research questions and techniques of a particular specialty within the field. |
 
 ### Readiness and progress
 
