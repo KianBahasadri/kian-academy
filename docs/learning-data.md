@@ -4,6 +4,18 @@
 
 Use `version: 1` and keep both `resources` and `practice` as arrays. Give each entry a nonempty `id` and `title`. IDs must be unique within their collection and should remain stable across edits. Use ISO 8601 for `createdAt` and `updatedAt`. The validator requires parseable date strings.
 
+## Adding resources with OpenCode Go
+
+Run the importer with Python 3 on Linux or macOS, the repository's Node.js version, and the OpenCode v2 CLI. It uses your existing Go login. For first-time setup, run `opencode`, enter `/connect`, and select OpenCode Go. [Go setup](https://opencode.ai/docs/console/go/)
+
+```sh
+python3 scripts/add-resources.py "Thinking in Systems by Donella Meadows" "https://docs.python.org/3/tutorial/"
+```
+
+Give each resource its own argument, or run the command without arguments and paste one resource per line, finishing with Ctrl-D. You can also pipe in a list. Include an ISBN or publisher URL for a particular edition and any progress you want recorded on that line.
+
+Go researches the items against the current catalog and proposes metadata and classifications. The script reports duplicates and unresolved inputs, validates the complete catalog, and saves additions together in `data/library.json`. Use `--dry-run` to preview a batch. Review the saved changes with `git diff -- data/library.json` before committing.
+
 ## Resources
 
 ```json
