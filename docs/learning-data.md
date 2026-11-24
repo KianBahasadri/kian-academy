@@ -6,7 +6,7 @@ Use `version: 1` and keep both `resources` and `practice` as arrays. Give each e
 
 ## Adding resources with OpenCode Go
 
-Run the importer with Python 3 on Linux or macOS, the repository's Node.js version, and the OpenCode v2 CLI. It uses your existing Go login. For first-time setup, run `opencode`, enter `/connect`, and select OpenCode Go. [Go setup](https://opencode.ai/docs/console/go/)
+Run the importer with Python 3 on Linux or macOS, the repository's Node.js version, and the OpenCode v2 CLI. It uses your existing Go login to run DeepSeek V4.1 Flash with maximum reasoning effort. For first-time setup, run `opencode`, enter `/connect`, and select OpenCode Go. [Go setup](https://opencode.ai/docs/console/go/)
 
 ```sh
 python3 scripts/add-resources.py "Thinking in Systems by Donella Meadows" "https://docs.python.org/3/tutorial/"

@@ -12,7 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG = ROOT / "data/library.json"
-MODEL = "opencode-go/deepseek-v4.1-flash"
+MODEL = "opencode-go/deepseek-v4.1-flash#max"
 
 
 def research(items, resources):
